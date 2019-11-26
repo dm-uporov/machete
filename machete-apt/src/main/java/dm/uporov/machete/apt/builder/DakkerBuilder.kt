@@ -2,7 +2,7 @@ package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
 import dm.uporov.machete.apt.moduleClassName
-import dm.uporov.machete.exception.DakkerIsNotInitializedException
+import dm.uporov.machete.exception.MacheteIsNotInitializedException
 
 internal const val DAKKER_FILE_NAME = "Dakker"
 
@@ -67,7 +67,7 @@ class DakkerBuilder(
                     .returns(it.value)
                     .addCode(
                         """
-                        if (!::${it.key}.isInitialized) throw ${DakkerIsNotInitializedException::class.qualifiedName}()
+                        if (!::${it.key}.isInitialized) throw ${MacheteIsNotInitializedException::class.qualifiedName}()
 
                         return ${it.key}
                     """.trimIndent()

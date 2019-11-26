@@ -2,23 +2,25 @@ package dm.uporov.machete
 
 import android.app.Application
 import dm.uporov.analytics.Analytics
-import dm.uporov.list.ListPresenterImpl
+import dm.uporov.list.LIST_FEATURE
 import dm.uporov.list.di.ListActivityComponent.Companion.listActivityComponent
-import dm.uporov.list.di.ListActivityComponentDefinition.Companion.listActivityComponentDefinition
-import dm.uporov.list.di.getAnalytics
+import dm.uporov.list.listActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
+import dm.uporov.machete.di.AppComponent.Companion.appComponent
+import dm.uporov.machete.di.AppComponentDefinition.Companion.macheteAppComponentDefinition
 import dm.uporov.machete.di.Machete.startMachete
-import dm.uporov.machete.di.MacheteAppComponent.Companion.macheteAppComponent
-import dm.uporov.machete.di.MacheteAppComponentDefinition.Companion.macheteAppComponentDefinition
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.single
 
 @MacheteApplication(
+    features = [
+        LIST_FEATURE
+    ],
     dependencies = [
         Analytics::class
     ]
 )
-class MacheteApp : Application() {
+class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
@@ -26,19 +28,17 @@ class MacheteApp : Application() {
     }
 
     private fun initDi() {
-        val macheteAppComponent = macheteAppComponent(
+        val macheteAppComponent = appComponent(
             definition = macheteAppComponentDefinition(
                 single { object : Analytics {} }
             ),
-            macheteAppFromListActivityProvider = just { this }
+            appFromListActivityProvider = just { this }
         )
 
         startMachete(
             macheteAppComponent,
             listActivityComponent(
-                definition = listActivityComponentDefinition(
-                    single { ListPresenterImpl(it, it.getAnalytics()) }
-                ),
+                definition = listActivityComponentDefinition,
                 dependencies = macheteAppComponent
             )
         )

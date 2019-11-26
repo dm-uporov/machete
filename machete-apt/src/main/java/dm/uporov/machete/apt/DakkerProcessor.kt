@@ -29,7 +29,7 @@ class DakkerProcessor : AbstractProcessor() {
 
     override fun getSupportedAnnotationTypes(): Set<String> {
         return setOf(
-            MacheteApplication::class.java.name,
+            LegacyMacheteApplication::class.java.name,
             ApplicationScope::class.java.name
         )
     }
@@ -44,8 +44,8 @@ class DakkerProcessor : AbstractProcessor() {
 
         val rootScope = roundEnvironment.generateRootScope(root, rootClassName)
         val scopesCores = roundEnvironment.generateScopesBy(
-            coreMarker = MacheteFeature::class,
-            scopeLevelMarker = FeatureScope::class,
+            coreMarker = LegacyMacheteFeature::class,
+            scopeLevelMarker = LegacyFeatureScope::class,
             rootClassName = rootClassName,
             rootDependencies = rootScope.providedDependencies
         )
@@ -55,7 +55,7 @@ class DakkerProcessor : AbstractProcessor() {
     }
 
     private fun RoundEnvironment.getRoot(): Element? {
-        val annotatedRoots = getElementsAnnotatedWith(MacheteApplication::class.java) ?: emptySet()
+        val annotatedRoots = getElementsAnnotatedWith(LegacyMacheteApplication::class.java) ?: emptySet()
 
         return when {
             annotatedRoots.isEmpty() -> null

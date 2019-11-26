@@ -6,9 +6,10 @@ import dm.uporov.list.di.setListActivityComponentInstance
 object Machete {
 
     fun startMachete(
-        macheteAppComponent: MacheteAppComponent,
+        appComponent: AppComponent,
         listActivityComponent: ListActivityComponent
     ) {
+        setAppComponentInstance(appComponent)
         setListActivityComponentInstance(listActivityComponent)
     }
 }

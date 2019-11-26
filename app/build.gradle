@@ -29,8 +29,8 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.1.0'
 
-    implementation project(':list')
-    implementation project(':analytics')
+    implementation project(':feature-list')
+    implementation project(':feature-analytics')
 
     implementation project(':machete')
     kapt project(':machete-apt')

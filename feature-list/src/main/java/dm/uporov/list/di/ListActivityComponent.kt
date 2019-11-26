@@ -11,11 +11,16 @@ fun setListActivityComponentInstance(instance: ListActivityComponent) {
     listActivityComponentInstance = instance
 }
 
-private fun getListActivityComponent(): ListActivityComponent {
+fun getListActivityComponent(): ListActivityComponent {
     if (!::listActivityComponentInstance.isInitialized) throw
-    dm.uporov.machete.exception.DakkerIsNotInitializedException()
+    dm.uporov.machete.exception.MacheteIsNotInitializedException()
 
     return listActivityComponentInstance
+}
+
+fun ListActivity.warmUpListActivityComponent() {
+    getListPresenter()
+    getAnalytics()
 }
 
 fun ListActivity.getListPresenter(): ListPresenter {
@@ -36,7 +41,7 @@ fun ListActivity.getAnalytics(): Analytics {
         .analyticsProvider(this)
 }
 
-fun ListActivity.injectResources(): Lazy<Analytics> = lazy {
+fun ListActivity.injectAnalytics(): Lazy<Analytics> = lazy {
     getListActivityComponent()
         .dependencies
         .analyticsProvider(this)

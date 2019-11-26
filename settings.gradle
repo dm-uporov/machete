@@ -1,2 +1,2 @@
-include ':app', ':machete-apt', ':list', ':machete', ':analytics'
+include ':app', ':machete-apt', ':feature-list', ':machete', ':feature-analytics'
 rootProject.name='Machete'
