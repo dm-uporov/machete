@@ -1,4 +1,4 @@
-package dm.uporov.machete.apt.model
+package dm.uporov.machete.apt.legacy_model
 
 data class ScopeCoreInfo(
     val scopeId: Int,

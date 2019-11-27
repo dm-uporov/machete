@@ -6,8 +6,9 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
 import com.sun.tools.javac.util.Name
-import dm.uporov.machete.apt.model.Dependency
+import dm.uporov.machete.apt.legacy_model.DependencyLegacy
 import dm.uporov.machete.Destroyable
+import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.exception.GenericInDependencyException
 import dm.uporov.machete.exception.IncorrectCoreOfScopeException
 import javax.lang.model.element.Element
@@ -15,30 +16,42 @@ import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
-fun Symbol.asDependency(parentClassName: Name): Dependency {
+
+fun Symbol.asDependency(
+    state: Dependency.State
+) = Dependency(
+    typeName = enclClass().asType().asTypeName().javaToKotlinType(),
+    state = state
+)
+
+
+
+
+fun Symbol.asDependencyLegacy(parentClassName: Name): DependencyLegacy {
     if (qualifiedName.toString() == "error.NonExistentClass") {
         throw RuntimeException("Wrong $parentClassName class definition")
     }
-    return Dependency(type.asTypeName().javaToKotlinType())
+    return DependencyLegacy(type.asTypeName().javaToKotlinType())
 }
 
-fun Symbol.ClassSymbol.asDependency(isSinglePerScope: Boolean) = asDependency(null, isSinglePerScope)
+fun Symbol.ClassSymbol.asDependencyLegacy(isSinglePerScope: Boolean) =
+    asDependencyLegacy(null, isSinglePerScope)
 
-fun Symbol.MethodSymbol.asDependency(isSinglePerScope: Boolean) =
-    asDependency(paramsAsDependencies(), isSinglePerScope)
+fun Symbol.MethodSymbol.asDependencyLegacy(isSinglePerScope: Boolean) =
+    asDependencyLegacy(paramsAsDependencies(), isSinglePerScope)
 
-private fun Symbol.asDependency(params: List<Dependency>?, isSinglePerScope: Boolean) =
-    Dependency(
+private fun Symbol.asDependencyLegacy(params: List<DependencyLegacy>?, isSinglePerScope: Boolean) =
+    DependencyLegacy(
         enclClass().asType().asTypeName().javaToKotlinType(),
         isSinglePerScope,
         params
     )
 
-fun Symbol.MethodSymbol.paramsAsDependencies(): List<Dependency> {
+fun Symbol.MethodSymbol.paramsAsDependencies(): List<DependencyLegacy> {
     val params = params()
     if (params.isNullOrEmpty()) return emptyList()
 
-    return params.map { it.asDependency(qualifiedName) }
+    return params.map { it.asDependencyLegacy(qualifiedName) }
 }
 
 fun Type.ClassType.toClassName(): ClassName {
@@ -85,8 +98,8 @@ private fun String.flatGenerics(): String {
     }
 }
 
-fun Set<Pair<Int, Dependency>>.toGroupedMap() = asSequence()
-    .groupBy(Pair<Int, Dependency>::first) { it.second }
+fun Set<Pair<Int, DependencyLegacy>>.toGroupedMap() = asSequence()
+    .groupBy(Pair<Int, DependencyLegacy>::first) { it.second }
     .mapValues { it.value.toSet() }
 
 fun Element.toClassSymbol(): Symbol.ClassSymbol? {
@@ -101,14 +114,15 @@ fun Symbol.ClassSymbol.checkOnDestroyable() {
     }
 }
 
-private fun Symbol.ClassSymbol.isImplementedOneOfInterfaces(vararg interfacesToImpl: KClass<*>) : Boolean {
+private fun Symbol.ClassSymbol.isImplementedOneOfInterfaces(vararg interfacesToImpl: KClass<*>): Boolean {
     if (interfaces.nonEmpty()) {
         interfaces.find { it.isKindOfOneOf(*interfacesToImpl) }?.run { return true }
     }
 
     if (superclass == Type.noType) return false
 
-    return (superclass.tsym as? Symbol.ClassSymbol)?.isImplementedOneOfInterfaces(*interfacesToImpl) ?: false
+    return (superclass.tsym as? Symbol.ClassSymbol)?.isImplementedOneOfInterfaces(*interfacesToImpl)
+        ?: false
 }
 
 private fun Type.isKindOfOneOf(vararg cls: KClass<*>): Boolean {

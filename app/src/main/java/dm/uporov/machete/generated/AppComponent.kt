@@ -3,8 +3,8 @@ package dm.uporov.machete.generated
 import android.content.Context
 import dm.uporov.analytics.Analytics
 import dm.uporov.analytics.CoreAnalytics
-import dm.uporov.analytics.generated.CoreAnalyticsModuleDefinition
-import dm.uporov.analytics.generated.CoreAnalyticsModuleDependencies
+import dm.uporov.analytics.generated.CoreAnalyticsComponentDefinition
+import dm.uporov.analytics.generated.CoreAnalyticsComponentDependencies
 import dm.uporov.list.ListActivity
 import dm.uporov.list.generated.ListActivityComponentDependencies
 import dm.uporov.machete.App
@@ -48,7 +48,7 @@ class AppComponent private constructor(
         definition,
         appFromListActivityProvider
     ),
-    CoreAnalyticsModuleDependencies by CoreAnalyticsComponentResolver(
+    CoreAnalyticsComponentDependencies by CoreAnalyticsComponentResolver(
         definition,
         appFromCoreAnalyticsProvider
     ) {
@@ -67,7 +67,7 @@ class AppComponent private constructor(
     private class CoreAnalyticsComponentResolver(
         private val definition: AppComponentDefinition,
         private val appFromCoreAnalyticsProvider: Provider<CoreAnalytics, App>
-    ) : CoreAnalyticsModuleDependencies {
+    ) : CoreAnalyticsComponentDependencies {
 
         override fun getContext(coreAnalytics: CoreAnalytics): Context {
             return definition
@@ -96,10 +96,10 @@ class AppComponentDefinition private constructor(
 ) {
     companion object {
         fun App.appComponentDefinition(
-            coreAnalyticsModuleDefinition: CoreAnalyticsModuleDefinition,
+            coreAnalyticsComponentDefinition: CoreAnalyticsComponentDefinition,
             contextProvider: Provider<App, Context>
         ) = AppComponentDefinition(
-            analyticsProvider = coreAnalyticsModuleDefinition.analyticsProvider.mapOwner(just { appComponentInstance }),
+            analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider.mapOwner(just { appComponentInstance }),
             contextProvider = contextProvider
         )
     }

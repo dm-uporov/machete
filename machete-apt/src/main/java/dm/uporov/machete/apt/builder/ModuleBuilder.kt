@@ -2,7 +2,7 @@ package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import dm.uporov.machete.apt.model.Dependency
+import dm.uporov.machete.apt.legacy_model.DependencyLegacy
 import dm.uporov.machete.apt.moduleName
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
@@ -17,11 +17,11 @@ class ModuleBuilder(
     private val coreClassName: ClassName,
     private val parentCoreClassName: ClassName?,
     private val rootClassName: ClassName,
-    private val allDependencies: Set<Dependency>,
-    private val parentDependencies: Set<Dependency>,
-    private val dependenciesWithoutProviders: Set<Dependency>,
-    private val scopeDependencies: Set<Dependency>,
-    private val requestedDependencies: Set<Dependency>
+    private val allDependencies: Set<DependencyLegacy>,
+    private val parentDependencies: Set<DependencyLegacy>,
+    private val dependenciesWithoutProviders: Set<DependencyLegacy>,
+    private val scopeDependencies: Set<DependencyLegacy>,
+    private val requestedDependencies: Set<DependencyLegacy>
 ) {
 
     private val pack: String = coreClassName.packageName
@@ -155,7 +155,7 @@ class ModuleBuilder(
             }.let(::addProperties)
     }
 
-    private fun FunSpec.Builder.withProvidersLambdasParamsOf(dependencies: Set<Dependency>) = apply {
+    private fun FunSpec.Builder.withProvidersLambdasParamsOf(dependencies: Set<DependencyLegacy>) = apply {
         dependencies.forEach {
             addParameter(
                 ParameterSpec.builder(
