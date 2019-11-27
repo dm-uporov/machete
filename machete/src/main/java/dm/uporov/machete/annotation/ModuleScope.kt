@@ -5,11 +5,11 @@ import kotlin.reflect.KClass
 /**
  *
  * Если аннотация применяется к конструктору класса, этот конструктор будет использоваться
- * для создания экземпляра класса в рамках скоупа указанной фичи.
+ * для создания экземпляра класса в рамках скоупа указанного модуля.
  *
- * Если аннотация применяется к классу, необходимо указать явный провайдер в definition фичи.
+ * Если аннотация применяется к классу, необходимо указать явный провайдер в definition модуля.
  *
- * @param featureName строковый идентификтор фичи
+ * @param moduleName строковый идентификтор модуля
  *
  * @param provideAs (optional) классы или интерфейсы, к которым биндится в рамках скоупа экземпляр класса.
  * Если здесь указан хотя бы один класс или интерфейс, зависимость не будет предоставлена по своему
@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
  */
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CONSTRUCTOR, AnnotationTarget.CLASS)
-annotation class FeatureScope(
-    val featureName: String,
+annotation class ModuleScope(
+    val moduleName: String,
     val provideAs: Array<KClass<*>> = []
 )

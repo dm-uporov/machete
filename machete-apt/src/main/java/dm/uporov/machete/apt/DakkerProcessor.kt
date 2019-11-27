@@ -237,7 +237,7 @@ class DakkerProcessor : AbstractProcessor() {
     private fun Symbol.ClassSymbol.getRequestedDependencies(): Set<Dependency> {
         return enclosedElements
             .asSequence()
-            .filter { it.getAnnotation(Inject::class.java) != null }
+            .filter { it.getAnnotation(LegacyInject::class.java) != null }
             .map {
                 Dependency(it.type.returnType.asTypeName().javaToKotlinType())
             }

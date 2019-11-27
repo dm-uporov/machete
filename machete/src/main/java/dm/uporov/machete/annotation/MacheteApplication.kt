@@ -6,6 +6,8 @@ import kotlin.reflect.KClass
  *
  * Аннотация применяется к классу наследнику от Application.
  *
+ * @param modules модули скоупа Application. Зависимости данных модулей распространяются на всё приложение
+ *
  * @param features фичи верхнего уровня, от которых не зависит ни одна другая фича.
  *
  * @param dependencies зависимости скоупа Application, к классам которых нет непосредственного
@@ -16,6 +18,7 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
 annotation class MacheteApplication(
-    vararg val features: String,
-    val dependencies: Array<KClass<*>>
+    val modules: Array<String> = [],
+    val features: Array<String> = [],
+    val dependencies: Array<KClass<*>> = []
 )
