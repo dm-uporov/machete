@@ -3,6 +3,8 @@ package dm.uporov.list
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.analytics.Analytics
+import dm.uporov.list.generated.getAnalytics
+import dm.uporov.list.generated.injectAnalytics
 import dm.uporov.list.generated.injectListPresenter
 import dm.uporov.list.generated.warmUpListActivityComponent
 import dm.uporov.machete.annotation.MacheteFeature
@@ -13,7 +15,8 @@ import dm.uporov.machete.annotation.MacheteFeature
 )
 class ListActivity : AppCompatActivity(), ListView {
 
-    private val listPresenter: ListPresenter by injectListPresenter()
+    private val listPresenter by injectListPresenter()
+    private val analytics by injectAnalytics()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +28,7 @@ class ListActivity : AppCompatActivity(), ListView {
     }
 
     override fun showItems(items: List<String>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        analytics.sendEvent("Items are showed")
     }
 
 }

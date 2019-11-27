@@ -18,6 +18,7 @@ class ListPresenterImpl(
 ): ListPresenter {
 
     override fun start() {
+        analytics.sendEvent("ListPresenterImpl is started")
         view.showItems(emptyList())
     }
 }
