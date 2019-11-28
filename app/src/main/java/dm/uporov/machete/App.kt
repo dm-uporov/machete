@@ -13,8 +13,8 @@ import dm.uporov.machete.generated.injectAnalytics
 import dm.uporov.machete.provider.just
 
 @MacheteApplication(
-    modules = [ANALYTICS_FEATURE],
-    features = [LIST_FEATURE]
+    includesFeatures = [ANALYTICS_FEATURE],
+    childFeatures = [LIST_FEATURE]
 )
 class App : Application() {
 

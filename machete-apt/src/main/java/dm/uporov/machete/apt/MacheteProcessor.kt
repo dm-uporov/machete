@@ -6,7 +6,10 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.APPLICATION_SCOPE_ID
-import dm.uporov.machete.annotation.*
+import dm.uporov.machete.annotation.ApplicationScope
+import dm.uporov.machete.annotation.LegacyInject
+import dm.uporov.machete.annotation.MacheteApplication
+import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
 import dm.uporov.machete.apt.model.*
@@ -45,21 +48,22 @@ class MacheteProcessor : AbstractProcessor() {
         val applicationMirror = roundEnvironment.getApplicationMirror() ?: return true
         val featuresMirrors = roundEnvironment.getFeaturesMirrors().toMutableSet()
 
-        val resolvedFeatures =
+        val independentFeatures =
             featuresMirrors.filter { it.childFeatures.isEmpty() && it.includesFeatures.isEmpty() }
 
 
-        if (resolvedFeatures.isEmpty()) {
+        if (independentFeatures.isEmpty()) {
             if (featuresMirrors.isEmpty()) {
                 // all right
             } else {
-                // cyclic feature dependencies detected
+                // throw cyclic feature dependencies detected
             }
         } else {
-            featuresMirrors.resolveFeatures(
-                TODO
-                resolvedFeatures.map { it.reifie(emptyList(), emptyList()) }.toSet()
-            )
+            val resolvedFeatures = featuresMirrors
+                .subtract(independentFeatures)
+                .resolveFeatures(
+                    independentFeatures.map { it.reifie(emptyList(), emptyList()) }.toSet()
+                )
         }
 
         val applicationScopeDependencies: List<Dependency> = roundEnvironment
@@ -82,8 +86,33 @@ class MacheteProcessor : AbstractProcessor() {
         return true
     }
 
-    private fun Set<FeatureMirror>.resolveFeatures(alreadyResolved: Set<Feature>): Set<Feature> {
+    private fun Set<FeatureMirror>.resolveFeatures(resolvedFeatures: Set<Feature>): Set<Feature> {
+        val resolvedMirrors = mutableSetOf<FeatureMirror>()
 
+        val newResolved = this.mapNotNull { unresolvedFeature ->
+            val resolvedIncludes = unresolvedFeature
+                .includesFeatures
+                .map { includedFeature ->
+                    val resolved = resolvedFeatures.find { it.name == includedFeature }
+                    resolved ?: return@mapNotNull null
+                }
+
+            val resolvedChild = unresolvedFeature
+                .childFeatures
+                .map { child ->
+                    val resolved = resolvedFeatures.find { it.name == child }
+                    resolved ?: return@mapNotNull null
+                }
+
+            resolvedMirrors.add(unresolvedFeature)
+            unresolvedFeature.reifie(resolvedIncludes, resolvedChild)
+        }
+
+        return when {
+            resolvedMirrors.isEmpty() -> throw CyclicFeatureDependencies(this.map(FeatureMirror::name))
+            this.size == newResolved.size -> resolvedFeatures + newResolved
+            else -> this.subtract(resolvedMirrors).resolveFeatures(resolvedFeatures + newResolved)
+        }
     }
 
     private fun RoundEnvironment.getApplicationMirror(): ApplicationMirror? {
