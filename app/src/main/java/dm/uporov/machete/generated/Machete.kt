@@ -1,9 +1,8 @@
 package dm.uporov.machete.generated
 
-import dm.uporov.list.generated.ListActivityComponent.Companion.listActivityComponent
 import dm.uporov.list.generated.ListActivityComponentDefinition
-import dm.uporov.list.generated.setListActivityComponentInstance
-import dm.uporov.machete.App
+import dm.uporov.list.generated.setListActivityComponentDefinition
+import dm.uporov.list.generated.setListActivityComponentDependenciesResolver
 
 object Machete {
 
@@ -12,11 +11,7 @@ object Machete {
         listActivityComponentDefinition: ListActivityComponentDefinition
     ) {
         setAppComponentInstance(appComponent)
-        setListActivityComponentInstance(
-            listActivityComponent(
-                definition = listActivityComponentDefinition,
-                dependencies = appComponent
-            )
-        )
+        setListActivityComponentDefinition(listActivityComponentDefinition)
+        setListActivityComponentDependenciesResolver(appComponent)
     }
 }

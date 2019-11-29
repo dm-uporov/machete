@@ -16,7 +16,7 @@ fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*> = MacheteFeature::c
         featureAnnotation.qualifiedName.toString()
     )
 
-    // TODO later
+    // TODO includeFeatures
 //    var includeFeaturesParam: List<Attribute.Class>? = null
     var childFeaturesParam: List<Attribute.Class>? = null
     var dependenciesParam: List<Attribute.Class>? = null
@@ -25,7 +25,7 @@ fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*> = MacheteFeature::c
         val name = it.fst.simpleName.toString()
         val value = it.snd.value
         when (name) {
-            // TODO later
+            // TODO includeFeatures
 //    "includeFeatures" -> includeFeaturesParam = value as? List<Attribute.Class>
             "childFeatures" -> childFeaturesParam = value as? List<Attribute.Class>
             "dependencies" -> dependenciesParam = value as? List<Attribute.Class>
@@ -34,7 +34,7 @@ fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*> = MacheteFeature::c
 
     return Feature(
         coreClass = this,
-        // TODO later
+        // TODO includeFeatures
 //    val includeFeatures = includeFeaturesParam.toTypeSymbolsSet()
         // TODO можно внутрь рекурсии передавать set фич - цепочку от корневого. Если наткнулись на уже имеющийся в set - кидаем исключение - зацикленные зависимости
         childFeatures = childFeaturesParam.toTypeSymbolsSet().map { it.asFeature() }.toSet(),

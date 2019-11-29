@@ -4,15 +4,13 @@ import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.asTypeName
-import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
-import com.sun.tools.javac.code.Type
 import dm.uporov.machete.APPLICATION_SCOPE_ID
 import dm.uporov.machete.annotation.*
+import dm.uporov.machete.apt.builder.FeatureComponentDependenciesBuilder
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
 import dm.uporov.machete.apt.model.*
-import dm.uporov.machete.exception.*
 import dm.uporov.machete.exception_legacy.ApplicationScopeIdUsageException
 import dm.uporov.machete.exception_legacy.DependenciesConflictException
 import dm.uporov.machete.exception_legacy.IllegalAnnotationUsageException
@@ -55,12 +53,14 @@ class MacheteProcessor : AbstractProcessor() {
     ): Boolean {
 //        val applicationMirror = roundEnvironment.getApplicationMirror() ?: return true
 //        val featuresMirrors = roundEnvironment.getFeaturesMirrors().toMutableSet()
-        val app =
-            roundEnvironment.getElementsAnnotatedWith(MacheteApplication::class.java).first() as Symbol.ClassSymbol
+        val app = roundEnvironment.getElementsAnnotatedWith(MacheteApplication::class.java)
+            .first() as Symbol.ClassSymbol
 
         val appFeature = app.asFeature(MacheteApplication::class)
 
-        appFeature.childFeatures
+        appFeature.childFeatures.forEach {
+            FeatureComponentDependenciesBuilder(it).build().write()
+        }
 
 //        val features: Set<Attribute.Class> = includeFeatures + childFeatures
 //

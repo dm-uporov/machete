@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.analytics.Analytics
 import dm.uporov.list.generated.injectAnalytics
 import dm.uporov.list.generated.injectListPresenter
-import dm.uporov.list.generated.warmUpListActivityComponent
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
@@ -18,10 +17,6 @@ class ListActivity : AppCompatActivity(), ListView {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // optional warming up
-        warmUpListActivityComponent()
-
         listPresenter.start()
     }
 
