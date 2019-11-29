@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="dm.uporov.machete">
+    package="dm.uporov.app">
 
     <application
         android:name=".App"
