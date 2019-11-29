@@ -6,16 +6,14 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.APPLICATION_SCOPE_ID
-import dm.uporov.machete.annotation.*
+import dm.uporov.machete.annotation.ApplicationScope
+import dm.uporov.machete.annotation.LegacyInject
+import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.apt.builder.FeatureComponentDependenciesBuilder
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
-import dm.uporov.machete.apt.model.*
-import dm.uporov.machete.exception_legacy.ApplicationScopeIdUsageException
-import dm.uporov.machete.exception_legacy.DependenciesConflictException
-import dm.uporov.machete.exception_legacy.IllegalAnnotationUsageException
-import dm.uporov.machete.exception_legacy.NoScopeIdException
-import dm.uporov.machete.exception_legacy.SeveralScopesUseTheSameIdException
+import dm.uporov.machete.apt.model.Dependency
+import dm.uporov.machete.exception_legacy.*
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -25,8 +23,8 @@ import kotlin.reflect.KClass
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_8) // to support Java 8
-@SupportedOptions(MacheteProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
-class MacheteProcessor : AbstractProcessor() {
+@SupportedOptions(MacheteDependenciesProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+class MacheteDependenciesProcessor : AbstractProcessor() {
 
     companion object {
         const val KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated"
@@ -38,8 +36,6 @@ class MacheteProcessor : AbstractProcessor() {
 //            ,
 //            ApplicationScope::class.java.name,
 //            MacheteFeature::class.java.name
-//            ,
-//            FeatureScope::class.java.name
         )
     }
 
@@ -51,76 +47,19 @@ class MacheteProcessor : AbstractProcessor() {
         set: MutableSet<out TypeElement>?,
         roundEnvironment: RoundEnvironment
     ): Boolean {
-//        val applicationMirror = roundEnvironment.getApplicationMirror() ?: return true
-//        val featuresMirrors = roundEnvironment.getFeaturesMirrors().toMutableSet()
-        val app = roundEnvironment.getElementsAnnotatedWith(MacheteApplication::class.java)
-            .first() as Symbol.ClassSymbol
+        val app = roundEnvironment
+            .getElementsAnnotatedWith(MacheteApplication::class.java)
+            .filterIsInstance<Symbol.ClassSymbol>()
+            .firstOrNull() ?: return true
 
         val appFeature = app.asFeature(MacheteApplication::class)
 
         appFeature.childFeatures.forEach {
             FeatureComponentDependenciesBuilder(it).build().write()
         }
-
-//        val features: Set<Attribute.Class> = includeFeatures + childFeatures
-//
-//        if (features.size > includeFeatures.size + childFeatures.size) {
-//            val duplicates = includeFeatures.intersect(childFeatures)
-//            throw FeatureIsChildAndIncludedException(duplicates.map {
-//                it.classType.asElement().qualifiedName.toString()
-//            })
-//        }
-//
-//        features.forEach { feature ->
-//            val featureElement = feature.classType.asElement()
-//            val featureAnnotation = featureElement.annotationMirrors.find {
-//                (it.annotationType as Type.ClassType).toClassName().canonicalName == MacheteFeature::class.java.canonicalName
-//            }
-//            if (featureAnnotation == null) {
-//                throw ClassIsNotAnnotatedException(featureElement.qualifiedName.toString())
-//            } else {
-//                // TODO берем dependencies фичи, и реализуем AppComponent как DependencyResolver
-//            }
-//        }
-//
-//        val independentFeatures =
-//            featuresMirrors.filter { it.childFeatures.isEmpty() && it.includesFeatures.isEmpty() }
-//
-//        val features = if (independentFeatures.isEmpty()) {
-//            if (featuresMirrors.isEmpty()) {
-//                // all right, just no features are defined
-//                emptySet()
-//            } else {
-//                throw CyclicFeatureDependenciesException(featuresMirrors.map(FeatureMirror::name))
-//            }
-//        } else {
-//            featuresMirrors
-//                .subtract(independentFeatures)
-//                .resolveFeatures(
-//                    independentFeatures.map { it.reifie(emptyList(), emptyList()) }.toSet()
-//                )
-//        }
-//
-//        val application = applicationMirror.resolveFeatures(features)
-//
-//
-//        val applicationScopeDependencies: List<Dependency> = roundEnvironment
-//            .getScopeLevelDependencies(ApplicationScope::class)
-//            .map { it.second }
-//        val featuresScopeDependencies: Set<Pair<String?, Dependency>> = roundEnvironment
-//            .getScopeLevelDependencies(FeatureScope::class)
-//
-//
-//        val applicationClassName = application.toClassName()
-//        val rootScope = roundEnvironment.generateRootScope(application, applicationClassName)
-//        val scopesCores = roundEnvironment.generateScopesBy(
-//            coreMarker = LegacyMacheteFeature::class,
-//            scopeLevelMarker = LegacyFeatureScope::class,
-//            rootClassName = applicationClassName,
-//            rootDependencies = rootScope.providedDependencies
-//        )
-//
-//        DakkerBuilder(application.toClassName(), scopesCores).build().write()
+        appFeature.includeFeatures.forEach {
+            FeatureComponentDependenciesBuilder(it).build().write()
+        }
         return true
     }
 

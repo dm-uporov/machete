@@ -1,7 +1,7 @@
 package dm.uporov.analytics
 
 import android.content.Context
-import dm.uporov.analytics.generated.CoreAnalyticsComponentDefinition.Companion.coreAnalyticsFeatureDefinition
+import dm.uporov.analytics.CoreAnalytics_ComponentDefinition.Companion.coreAnalytics_ComponentDefinition
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.provider.single
 
@@ -10,8 +10,15 @@ import dm.uporov.machete.provider.single
 )
 object CoreAnalytics {
 
-    val coreAnalyticsFeatureDefinition = coreAnalyticsFeatureDefinition(
-        single { AnalyticsImpl(it.getContext(this)) }
+    val coreAnalyticsFeatureDefinition = coreAnalytics_ComponentDefinition(
+        single {
+//            AnalyticsImpl(it.getContext(this))
+            object: Analytics {
+                override fun sendEvent(event: String) {
+                    //
+                }
+            }
+        }
     )
 
 }

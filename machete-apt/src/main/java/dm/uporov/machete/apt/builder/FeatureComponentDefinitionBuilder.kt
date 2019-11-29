@@ -1,11 +1,11 @@
 package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
-import dm.uporov.machete.apt.toClassName
-import dm.uporov.machete.provider.Provider
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.apt.flatGenerics
+import dm.uporov.machete.apt.toClassName
+import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
@@ -143,38 +143,17 @@ class FeatureComponentDefinitionBuilder(
                     FunSpec.builder(componentDefinitionName.decapitalize())
                         .returns(componentDefinitionClassName)
                         .withProvidersParams()
-//                        .addStatement("""
-//                            return $componentDefinitionName(
-//                        ${dependenciesWithoutProviders.joinToString {
-//                            val name = it.uniqueName.asProviderParamName()
-//                            return@joinToString "$name = $name"
-//                        }
-//                        }
-//                        ${if (dependenciesWithoutProviders.isEmpty() || scopeDependencies.isEmpty()) "" else ","}
-//                        ${scopeDependencies.joinToString(",\n") { element ->
-//                            "${element.uniqueName.asProviderParamName()} = " +
-//                                    "${if (element.isSinglePerScope) "single" else "factory"} {\n" +
-//                                    "${element.uniqueName}(" +
-//                                    (element.params?.joinToString {
-//                                        "$coreModuleFromDakkerStatement.${it.uniqueName.asProviderParamName()}.invoke(it)"
-//                                    } ?: "") +
-//                                    ")" +
-//                                    "\n}"
-//                        }}
-//                        ${if ((dependenciesWithoutProviders.isEmpty() && scopeDependencies.isEmpty()) || parentDependencies.isEmpty()) "" else ","}
-//                            ${parentDependencies.joinToString(",\n") {
-//                            val providerName = it.uniqueName.asProviderParamName()
-//                            "$providerName = factory { " +
-//                                    if (parentCoreClassName == rootClassName) {
-//                                        "$rootCoreModuleFromDakkerStatement.$providerName.invoke(this)"
-//                                    } else {
-//                                        "$parentCoreModuleFromDakkerStatement.$providerName.invoke(it.parentCoreProvider()) "
-//                                    } +
-//                                    "}"
-//                        }}
-//                            )
-//                        """.trimIndent()
-//                        )
+                        .addStatement(
+                            """
+                            return $componentDefinitionName(
+                            ${dependencies.joinToString {
+                                val providerName =
+                                    it.asType().asTypeName().flatGenerics().asProviderName()
+                                return@joinToString "$providerName = $providerName"
+                            }}
+                            )
+                            """.trimIndent()
+                        )
                         .build()
                 )
                 .build()

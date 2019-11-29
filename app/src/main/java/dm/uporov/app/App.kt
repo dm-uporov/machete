@@ -1,16 +1,15 @@
-package dm.uporov.machete
+package dm.uporov.app
 
 import android.app.Application
 import android.content.Context
-import dm.uporov.list.ListActivity
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.CoreAnalytics.coreAnalyticsFeatureDefinition
+import dm.uporov.app.generated.AppComponentDefinition.Companion.appComponentDefinition
+import dm.uporov.app.generated.Machete.startMachete
+import dm.uporov.app.generated.injectAnalytics
+import dm.uporov.list.ListActivity
 import dm.uporov.list.listActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
-import dm.uporov.machete.generated.AppComponent.Companion.appComponent
-import dm.uporov.machete.generated.AppComponentDefinition.Companion.appComponentDefinition
-import dm.uporov.machete.generated.Machete.startMachete
-import dm.uporov.machete.generated.injectAnalytics
 import dm.uporov.machete.provider.just
 
 @MacheteApplication(
@@ -30,12 +29,10 @@ class App : Application() {
 
     private fun initDi() {
         startMachete(
-            appComponent(
-                appComponentDefinition(
-                    coreAnalyticsFeatureDefinition,
-                    contextProvider = just { this }
-                ),
-                appFromCoreAnalyticsProvider = just { this },
+            appComponentDefinition(
+                coreAnalyticsFeatureDefinition,
+                contextProvider = just { this },
+                coreAnalyticsProvider = just { CoreAnalytics },
                 appFromListActivityProvider = just { this }
             ),
             listActivityComponentDefinition
