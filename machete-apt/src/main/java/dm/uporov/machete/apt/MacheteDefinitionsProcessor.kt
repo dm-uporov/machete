@@ -7,13 +7,14 @@ import com.squareup.kotlinpoet.asTypeName
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.APPLICATION_SCOPE_ID
 import dm.uporov.machete.annotation.*
-import dm.uporov.machete.apt.builder.DakkerBuilder
+import dm.uporov.machete.apt.builder.FeatureComponentDefinitionBuilder
+import dm.uporov.machete.apt.builder.FeatureComponentDependenciesBuilder
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
+import dm.uporov.machete.apt.model.*
 import dm.uporov.machete.exception_legacy.ApplicationScopeIdUsageException
 import dm.uporov.machete.exception_legacy.DependenciesConflictException
 import dm.uporov.machete.exception_legacy.IllegalAnnotationUsageException
-import dm.uporov.machete.exception.MoreThanOneMacheteApplicationException
 import dm.uporov.machete.exception_legacy.NoScopeIdException
 import dm.uporov.machete.exception_legacy.SeveralScopesUseTheSameIdException
 import java.io.File
@@ -25,8 +26,8 @@ import kotlin.reflect.KClass
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_8) // to support Java 8
-@SupportedOptions(DakkerProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
-class DakkerProcessor : AbstractProcessor() {
+@SupportedOptions(MacheteDefinitionsProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+class MacheteDefinitionsProcessor : AbstractProcessor() {
 
     companion object {
         const val KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated"
@@ -34,8 +35,8 @@ class DakkerProcessor : AbstractProcessor() {
 
     override fun getSupportedAnnotationTypes(): Set<String> {
         return setOf(
-            LegacyMacheteApplication::class.java.name,
-            ApplicationScope::class.java.name
+//            ApplicationScope::class.java.name,
+            FeatureScope::class.java.name
         )
     }
 
@@ -43,36 +44,94 @@ class DakkerProcessor : AbstractProcessor() {
         return SourceVersion.latest()
     }
 
-    override fun process(set: MutableSet<out TypeElement>?, roundEnvironment: RoundEnvironment): Boolean {
-        val root = roundEnvironment.getRoot() ?: return true
-        val rootClassName = root.toClassName()
+    override fun process(
+        set: MutableSet<out TypeElement>?,
+        roundEnvironment: RoundEnvironment
+    ): Boolean {
+        roundEnvironment.getElementsAnnotatedWith(FeatureScope::class.java)
+            .asSequence()
+            .filterIsInstance<Symbol.TypeSymbol>()
+            .map { it.asScopeDependency() }
+            .groupBy { it.featureClass }
+            .mapValues { it.value.map(ScopeDependency::dependencyClass) }
+            .forEach { (feature, dependencies) ->
+                FeatureComponentDefinitionBuilder(feature, dependencies)
+                    .build()
+                    .write()
+            }
 
-        val rootScope = roundEnvironment.generateRootScope(root, rootClassName)
-        val scopesCores = roundEnvironment.generateScopesBy(
-            coreMarker = LegacyMacheteFeature::class,
-            scopeLevelMarker = LegacyFeatureScope::class,
-            rootClassName = rootClassName,
-            rootDependencies = rootScope.providedDependencies
-        )
-
-        DakkerBuilder(root.toClassName(), scopesCores).build().write()
         return true
     }
 
-    private fun RoundEnvironment.getRoot(): Element? {
-        val annotatedRoots = getElementsAnnotatedWith(LegacyMacheteApplication::class.java) ?: emptySet()
+    private fun RoundEnvironment.getScopeLevelDependencies(
+        scopeLevelMarker: KClass<out Annotation>
+    ): Set<Pair<String?, Dependency>> {
+        val scopeLevelDependencies = mutableSetOf<Pair<String?, Dependency>>()
 
-        return when {
-            annotatedRoots.isEmpty() -> null
-            else -> annotatedRoots.singleOrNull() ?: throw MoreThanOneMacheteApplicationException()
+        getElementsAnnotatedWith(scopeLevelMarker.java)?.forEach { element ->
+            if (element !is Symbol) return@forEach
+
+            val dependencyScopeName = element.getDependencyScopeName()
+
+            when (element) {
+                is Symbol.MethodSymbol -> TODO()
+//                element
+//                    .asDependency(isSinglePerScope)
+//                    .let { scopeLevelDependencies.add(scopeId to it) }
+//                    .let { wasProviderAddedToCollection(it, element.enclClass()) }
+                is Symbol.ClassSymbol -> element
+                    .asDependency(Dependency.State.NEED_FOR_PROVIDE)
+                    .also { scopeLevelDependencies.add(dependencyScopeName to it) }
+            }
         }
+
+        return scopeLevelDependencies
+    }
+
+    private fun Symbol.getDependencyScopeName(): String? {
+        for (annotation in annotationMirrors) {
+            for (pair in annotation.values) {
+                when (pair.fst.simpleName.toString()) {
+                    "feature" -> return pair.snd.value as String
+                }
+            }
+        }
+        return null
+    }
+
+
+    private fun RoundEnvironment.getScopeLevelDependenciesLegacy(scopeLevelMarker: KClass<out Annotation>): ScopeLevelDependencies {
+        val scopeLevelDependencies = mutableSetOf<Pair<Int, DependencyLegacy>>()
+        val scopeLevelDependenciesWithoutProviders = mutableSetOf<Pair<Int, DependencyLegacy>>()
+
+        getElementsAnnotatedWith(scopeLevelMarker.java)?.forEach { element ->
+            if (element !is Symbol) return@forEach
+
+            val (scopeId, isSinglePerScope) = element.getDependencyInfoLegacy()
+
+            when (element) {
+                is Symbol.MethodSymbol -> element
+                    .asDependencyLegacy(isSinglePerScope)
+                    .let { scopeLevelDependencies.add(scopeId to it) }
+                    .let { wasProviderAddedToCollection(it, element.enclClass()) }
+                is Symbol.ClassSymbol -> element
+                    .asDependencyLegacy(isSinglePerScope)
+                    .let { scopeLevelDependenciesWithoutProviders.add(scopeId to it) }
+                    .let { wasProviderAddedToCollection(it, element) }
+            }
+        }
+
+        return ScopeLevelDependencies(
+            scopeLevelDependencies.toGroupedMap(),
+            scopeLevelDependenciesWithoutProviders.toGroupedMap()
+        )
     }
 
     private fun RoundEnvironment.generateRootScope(
         root: Element,
         rootClassName: ClassName
     ): Scope {
-        val rootLevelDependencies = getScopeLevelDependencies(ApplicationScope::class)
+        val rootLevelDependencies = getScopeLevelDependenciesLegacy(ApplicationScope::class)
 
         return mapOf(
             APPLICATION_SCOPE_ID to ScopeCore(
@@ -99,16 +158,18 @@ class DakkerProcessor : AbstractProcessor() {
         rootClassName: ClassName,
         rootDependencies: Set<DependencyLegacy>
     ): Set<ClassName> {
-        val scopeLevelDependencies = getScopeLevelDependencies(scopeLevelMarker)
+        val scopeLevelDependencies = getScopeLevelDependenciesLegacy(scopeLevelMarker)
 
         (getElementsAnnotatedWith(coreMarker.java) ?: emptySet())
             .asSequence()
-            // Core of scope must be class
-            .map { it.toClassSymbol() ?: throw IllegalAnnotationUsageException(
-                coreMarker
-            )
+            .map {
+                // Core of scope must be class
+                if (this !is Symbol.ClassSymbol) {
+                    throw IllegalAnnotationUsageException(coreMarker)
+                }
+                this as Symbol.ClassSymbol
             }
-            // Core of scope must implement Destroyable or LifecycleOwner, to Dakker can trash all scope onDestroy event
+            // Core of scope must implement Destroyable or LifecycleOwner, to Machete can trash all scope onDestroy event
             .onEach(Symbol.ClassSymbol::checkOnDestroyable)
             .map {
                 val coreClassName = it.toClassName()
@@ -149,33 +210,6 @@ class DakkerProcessor : AbstractProcessor() {
             .run { return this }
     }
 
-    private fun RoundEnvironment.getScopeLevelDependencies(scopeLevelMarker: KClass<out Annotation>): ScopeLevelDependencies {
-        val scopeLevelDependencies = mutableSetOf<Pair<Int, DependencyLegacy>>()
-        val scopeLevelDependenciesWithoutProviders = mutableSetOf<Pair<Int, DependencyLegacy>>()
-
-        getElementsAnnotatedWith(scopeLevelMarker.java)?.forEach { element ->
-            if (element !is Symbol) return@forEach
-
-            val (scopeId, isSinglePerScope) = element.getDependencyInfo()
-
-            when (element) {
-                is Symbol.MethodSymbol -> element
-                    .asDependencyLegacy(isSinglePerScope)
-                    .let { scopeLevelDependencies.add(scopeId to it) }
-                    .let { wasProviderAddedToCollection(it, element.enclClass()) }
-                is Symbol.ClassSymbol -> element
-                    .asDependencyLegacy(isSinglePerScope)
-                    .let { scopeLevelDependenciesWithoutProviders.add(scopeId to it) }
-                    .let { wasProviderAddedToCollection(it, element) }
-            }
-        }
-
-        return ScopeLevelDependencies(
-            scopeLevelDependencies.toGroupedMap(),
-            scopeLevelDependenciesWithoutProviders.toGroupedMap()
-        )
-    }
-
     private fun Map<Int, ScopeCore>.buildGraph(
         scopeId: Int,
         parentScopeId: Int? = null,
@@ -188,7 +222,8 @@ class DakkerProcessor : AbstractProcessor() {
         val coreScope = get(scopeId) ?: throw RuntimeException("Something went wrong")
 
         val scopeDependencies = scopeLevelDependencies.withProviders[scopeId] ?: emptySet()
-        val scopeDependenciesWithoutProviders = scopeLevelDependencies.withoutProviders[scopeId] ?: emptySet()
+        val scopeDependenciesWithoutProviders =
+            scopeLevelDependencies.withoutProviders[scopeId] ?: emptySet()
         val requestedDependencies = coreScope.requestedDependencies
 
         val requestedAsParamsDependencies = scopeDependencies
@@ -254,9 +289,10 @@ class DakkerProcessor : AbstractProcessor() {
             .toSet()
     }
 
-    private fun FileSpec.write() = writeTo(File(processingEnv.options[KAPT_KOTLIN_GENERATED_OPTION_NAME]))
+    private fun FileSpec.write() =
+        writeTo(File(processingEnv.options[KAPT_KOTLIN_GENERATED_OPTION_NAME]))
 
-    private fun Symbol.getDependencyInfo(): DependencyInfoLegacy {
+    private fun Symbol.getDependencyInfoLegacy(): DependencyInfoLegacy {
         var scopeId: Int? = null
         var isSinglePerScope: Boolean? = null
         for (annotation in annotationMirrors) {

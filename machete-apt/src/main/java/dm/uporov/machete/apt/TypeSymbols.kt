@@ -3,8 +3,10 @@ package dm.uporov.machete.apt
 import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
+import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.apt.model.Feature
+import dm.uporov.machete.apt.model.ScopeDependency
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
@@ -35,18 +37,39 @@ fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*> = MacheteFeature::c
     return Feature(
         coreClass = this,
         // TODO includeFeatures
-//    val includeFeatures = includeFeaturesParam.toTypeSymbolsSet()
-        // TODO можно внутрь рекурсии передавать set фич - цепочку от корневого. Если наткнулись на уже имеющийся в set - кидаем исключение - зацикленные зависимости
-        childFeatures = childFeaturesParam.toTypeSymbolsSet().map { it.asFeature() }.toSet(),
-        dependencies = dependenciesParam.toTypeSymbolsSet()
+//    val includeFeatures = includeFeaturesParam.toTypeSymbols()
+        // TODO можно внутрь рекурсии передавать список фич - цепочку от корневого.
+        //  Если наткнулись на уже имеющийся в списке, кидаем исключение "зацикленные зависимости"
+        childFeatures = childFeaturesParam.toTypeSymbols().map { it.asFeature() }.toSet(),
+        dependencies = dependenciesParam.toTypeSymbols().toList()
     )
 }
 
-private fun List<Attribute.Class>?.toTypeSymbolsSet(): Set<Symbol.TypeSymbol> {
-    this ?: return emptySet()
+private fun List<Attribute.Class>?.toTypeSymbols(): Sequence<Symbol.TypeSymbol> {
+    this ?: return emptySequence()
 
-    return this.asSequence()
-        .map(Attribute.Class::classType)
-        .map(Type::asElement)
-        .toSet()
+    return this.asSequence().map { it.classType.asElement() }
+}
+
+fun Symbol.TypeSymbol.asScopeDependency(scopeAnnotation: KClass<*> = FeatureScope::class): ScopeDependency {
+    val annotationMirror = annotationMirrors.find {
+        it.type.asElement().qualifiedName.toString() == scopeAnnotation.qualifiedName
+    } ?: throw ClassIsNotAnnotatedException(
+        this.qualifiedName.toString(),
+        scopeAnnotation.qualifiedName.toString()
+    )
+
+    annotationMirror.values.forEach {
+        val name = it.fst.simpleName.toString()
+        val value = it.snd.value
+        when (name) {
+            "feature" -> {
+                return ScopeDependency(
+                    dependencyClass = this,
+                    featureClass = (value as Type.ClassType).asElement()
+                )
+            }
+        }
+    }
+    throw RuntimeException()
 }

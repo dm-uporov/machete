@@ -7,5 +7,5 @@ data class Feature(
     // TODO includeFeatures
 //    val includeFeatures: Set<Symbol.TypeSymbol>,
     val childFeatures: Set<Feature>,
-    val dependencies: Set<Symbol.TypeSymbol>
+    val dependencies: List<Symbol.TypeSymbol>
 )

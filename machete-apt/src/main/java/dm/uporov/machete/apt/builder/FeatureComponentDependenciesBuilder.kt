@@ -29,10 +29,7 @@ class FeatureComponentDependenciesBuilder(
         ClassName.bestGuess("$coreClassPackage.$componentDependenciesName")
 
     fun build(): FileSpec {
-        return FileSpec.builder(
-            coreClassName.packageName,
-            coreClassSimpleName.asComponentDependenciesClassName()
-        )
+        return FileSpec.builder(coreClassPackage, componentDependenciesName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory")
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
@@ -41,14 +38,6 @@ class FeatureComponentDependenciesBuilder(
             .withInjectFunctions()
             .withComponentDependenciesInterface()
             .build()
-    }
-
-    private fun FileSpec.Builder.withComponentDependenciesInterface() = apply {
-        addType(
-            TypeSpec.interfaceBuilder(componentDependenciesClassName)
-                .withProvidersProperties()
-                .build()
-        )
     }
 
     private fun FileSpec.Builder.withDependenciesField() = apply {
@@ -69,26 +58,12 @@ class FeatureComponentDependenciesBuilder(
         )
         addFunction(
             FunSpec.builder("getDependencies")
+                .addModifiers(KModifier.PRIVATE)
                 .returns(componentDependenciesClassName)
                 .addStatement("if (!::dependencies.isInitialized) throw MacheteIsNotInitializedException()")
                 .addStatement(" return dependencies")
                 .build()
         )
-    }
-
-    private fun TypeSpec.Builder.withProvidersProperties() = apply {
-        feature.dependencies.forEach {
-            val uniqueName = it.asType().asTypeName().flatGenerics()
-            addProperty(
-                PropertySpec.builder(
-                    uniqueName.asProviderName(),
-                    Provider::class.asClassName().parameterizedBy(
-                        feature.coreClass.toClassName(),
-                        it.toClassName()
-                    )
-                ).build()
-            )
-        }
     }
 
     private fun FileSpec.Builder.withGetFunctions() = apply {
@@ -124,6 +99,29 @@ class FeatureComponentDependenciesBuilder(
                     .returns(lazy)
                     .addStatement(" return lazy { getDependencies().${uniqueName.asProviderName()}.invoke(this) }")
                     .build()
+            )
+        }
+    }
+
+    private fun FileSpec.Builder.withComponentDependenciesInterface() = apply {
+        addType(
+            TypeSpec.interfaceBuilder(componentDependenciesClassName)
+                .withProvidersProperties()
+                .build()
+        )
+    }
+
+    private fun TypeSpec.Builder.withProvidersProperties() = apply {
+        feature.dependencies.forEach {
+            val uniqueName = it.asType().asTypeName().flatGenerics()
+            addProperty(
+                PropertySpec.builder(
+                    uniqueName.asProviderName(),
+                    Provider::class.asClassName().parameterizedBy(
+                        coreClassName,
+                        it.toClassName()
+                    )
+                ).build()
             )
         }
     }
