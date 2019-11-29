@@ -8,6 +8,7 @@ import dm.uporov.analytics.generated.CoreAnalyticsComponentDependencies
 import dm.uporov.list.ListActivity
 import dm.uporov.list.generated.ListActivityComponentDependencies
 import dm.uporov.machete.App
+import dm.uporov.machete.exception.MacheteIsNotInitializedException
 import dm.uporov.machete.provider.Provider
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.mapOwner
@@ -20,7 +21,7 @@ fun setAppComponentInstance(instance: AppComponent) {
 
 private fun getAppComponent(): AppComponent {
     if (!::appComponentInstance.isInitialized) throw
-    dm.uporov.machete.exception.MacheteIsNotInitializedException()
+    MacheteIsNotInitializedException()
 
     return appComponentInstance
 }

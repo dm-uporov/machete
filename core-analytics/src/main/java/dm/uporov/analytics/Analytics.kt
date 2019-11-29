@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import dm.uporov.machete.annotation.FeatureScope
 
-@FeatureScope(featureName = CoreAnalytics.ANALYTICS_FEATURE)
+@FeatureScope(feature = CoreAnalytics::class)
 interface Analytics {
 
     fun sendEvent(event: String)

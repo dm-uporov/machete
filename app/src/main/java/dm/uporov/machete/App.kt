@@ -1,9 +1,10 @@
 package dm.uporov.machete
 
 import android.app.Application
-import dm.uporov.analytics.CoreAnalytics.ANALYTICS_FEATURE
+import android.content.Context
+import dm.uporov.list.ListActivity
+import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.CoreAnalytics.coreAnalyticsFeatureDefinition
-import dm.uporov.list.LIST_FEATURE
 import dm.uporov.list.listActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.generated.AppComponent.Companion.appComponent
@@ -13,8 +14,9 @@ import dm.uporov.machete.generated.injectAnalytics
 import dm.uporov.machete.provider.just
 
 @MacheteApplication(
-    includesFeatures = [ANALYTICS_FEATURE],
-    childFeatures = [LIST_FEATURE]
+    includeFeatures = [CoreAnalytics::class],
+    childFeatures = [ListActivity::class],
+    dependencies = [Context::class]
 )
 class App : Application() {
 

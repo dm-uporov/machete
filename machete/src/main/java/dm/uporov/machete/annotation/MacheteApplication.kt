@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.CLASS)
 annotation class MacheteApplication(
-    val includesFeatures: Array<String> = [],
-    val childFeatures: Array<String> = [],
+    val includeFeatures: Array<KClass<*>> = [],
+    val childFeatures: Array<KClass<*>> = [],
     val dependencies: Array<KClass<*>> = []
 )

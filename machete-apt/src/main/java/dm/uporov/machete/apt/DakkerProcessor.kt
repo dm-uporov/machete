@@ -10,7 +10,12 @@ import dm.uporov.machete.annotation.*
 import dm.uporov.machete.apt.builder.DakkerBuilder
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
-import dm.uporov.machete.exception.*
+import dm.uporov.machete.exception_legacy.ApplicationScopeIdUsageException
+import dm.uporov.machete.exception_legacy.DependenciesConflictException
+import dm.uporov.machete.exception_legacy.IllegalAnnotationUsageException
+import dm.uporov.machete.exception.MoreThanOneMacheteApplicationException
+import dm.uporov.machete.exception_legacy.NoScopeIdException
+import dm.uporov.machete.exception_legacy.SeveralScopesUseTheSameIdException
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -99,7 +104,10 @@ class DakkerProcessor : AbstractProcessor() {
         (getElementsAnnotatedWith(coreMarker.java) ?: emptySet())
             .asSequence()
             // Core of scope must be class
-            .map { it.toClassSymbol() ?: throw IllegalAnnotationUsageException(coreMarker) }
+            .map { it.toClassSymbol() ?: throw IllegalAnnotationUsageException(
+                coreMarker
+            )
+            }
             // Core of scope must implement Destroyable or LifecycleOwner, to Dakker can trash all scope onDestroy event
             .onEach(Symbol.ClassSymbol::checkOnDestroyable)
             .map {
@@ -231,7 +239,9 @@ class DakkerProcessor : AbstractProcessor() {
     }
 
     private fun wasProviderAddedToCollection(wasAdded: Boolean, element: Symbol.ClassSymbol) {
-        if (!wasAdded) throw DependenciesConflictException(element.qualifiedName.toString())
+        if (!wasAdded) throw DependenciesConflictException(
+            element.qualifiedName.toString()
+        )
     }
 
     private fun Symbol.ClassSymbol.getRequestedDependencies(): Set<DependencyLegacy> {
@@ -276,7 +286,10 @@ class DakkerProcessor : AbstractProcessor() {
             }
         }
         scopeId ?: throw NoScopeIdException(qualifiedName.toString())
-        if (scopeId == APPLICATION_SCOPE_ID) throw ApplicationScopeIdUsageException(scopeId, qualifiedName.toString())
+        if (scopeId == APPLICATION_SCOPE_ID) throw ApplicationScopeIdUsageException(
+            scopeId,
+            qualifiedName.toString()
+        )
 
         return ScopeCoreInfo(scopeId, parentScopeId ?: APPLICATION_SCOPE_ID)
     }

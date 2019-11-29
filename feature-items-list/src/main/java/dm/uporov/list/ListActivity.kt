@@ -3,14 +3,12 @@ package dm.uporov.list
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.analytics.Analytics
-import dm.uporov.list.generated.getAnalytics
 import dm.uporov.list.generated.injectAnalytics
 import dm.uporov.list.generated.injectListPresenter
 import dm.uporov.list.generated.warmUpListActivityComponent
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
-    featureName = LIST_FEATURE,
     dependencies = [Analytics::class]
 )
 class ListActivity : AppCompatActivity(), ListView {

@@ -54,7 +54,7 @@ publish {
     bintrayUser = System.getenv("BINTRAY_USER") ?: BINTRAY_USER
     bintrayKey = System.getenv("BINTRAY_API_KEY") ?: BINTRAY_API_KEY
 
-    userOrg = 'udy18rus'
+    userOrg = 'dm-uporov'
     groupId = 'com.github.dm.uporov'
     artifactId = 'machete-kapt'
     publishVersion = "$lib_version"

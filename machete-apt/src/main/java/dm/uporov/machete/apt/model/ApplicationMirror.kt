@@ -9,10 +9,21 @@ data class ApplicationMirror(
     val dependencies: List<Dependency>
 )
 
+fun ApplicationMirror.reifie(
+    includesFeatures: List<LegacyFeature>,
+    childFeatures: List<LegacyFeature>
+) = Application(
+    applicationClass = applicationClass,
+    includesFeatures = includesFeatures,
+    childFeatures = childFeatures,
+    dependencies = dependencies
+)
+
+
 data class Application(
     val applicationClass: TypeName,
-    val includesFeatures: List<FeatureMirror>,
-    val childFeatures: List<FeatureMirror>,
+    val includesFeatures: List<LegacyFeature>,
+    val childFeatures: List<LegacyFeature>,
     val dependencies: List<Dependency>
 )
 

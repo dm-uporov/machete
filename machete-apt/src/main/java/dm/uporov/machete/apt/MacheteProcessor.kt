@@ -4,16 +4,20 @@ import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.asTypeName
+import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
+import com.sun.tools.javac.code.Type
 import dm.uporov.machete.APPLICATION_SCOPE_ID
-import dm.uporov.machete.annotation.ApplicationScope
-import dm.uporov.machete.annotation.LegacyInject
-import dm.uporov.machete.annotation.MacheteApplication
-import dm.uporov.machete.annotation.MacheteFeature
+import dm.uporov.machete.annotation.*
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.legacy_model.*
 import dm.uporov.machete.apt.model.*
 import dm.uporov.machete.exception.*
+import dm.uporov.machete.exception_legacy.ApplicationScopeIdUsageException
+import dm.uporov.machete.exception_legacy.DependenciesConflictException
+import dm.uporov.machete.exception_legacy.IllegalAnnotationUsageException
+import dm.uporov.machete.exception_legacy.NoScopeIdException
+import dm.uporov.machete.exception_legacy.SeveralScopesUseTheSameIdException
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -32,8 +36,12 @@ class MacheteProcessor : AbstractProcessor() {
 
     override fun getSupportedAnnotationTypes(): Set<String> {
         return setOf(
-            MacheteApplication::class.java.name,
-            ApplicationScope::class.java.name
+            MacheteApplication::class.java.name
+//            ,
+//            ApplicationScope::class.java.name,
+//            MacheteFeature::class.java.name
+//            ,
+//            FeatureScope::class.java.name
         )
     }
 
@@ -45,34 +53,64 @@ class MacheteProcessor : AbstractProcessor() {
         set: MutableSet<out TypeElement>?,
         roundEnvironment: RoundEnvironment
     ): Boolean {
-        val applicationMirror = roundEnvironment.getApplicationMirror() ?: return true
-        val featuresMirrors = roundEnvironment.getFeaturesMirrors().toMutableSet()
+//        val applicationMirror = roundEnvironment.getApplicationMirror() ?: return true
+//        val featuresMirrors = roundEnvironment.getFeaturesMirrors().toMutableSet()
+        val app =
+            roundEnvironment.getElementsAnnotatedWith(MacheteApplication::class.java).first() as Symbol.ClassSymbol
 
-        val independentFeatures =
-            featuresMirrors.filter { it.childFeatures.isEmpty() && it.includesFeatures.isEmpty() }
+        val appFeature = app.asFeature(MacheteApplication::class)
 
+        appFeature.childFeatures
 
-        if (independentFeatures.isEmpty()) {
-            if (featuresMirrors.isEmpty()) {
-                // all right
-            } else {
-                // throw cyclic feature dependencies detected
-            }
-        } else {
-            val resolvedFeatures = featuresMirrors
-                .subtract(independentFeatures)
-                .resolveFeatures(
-                    independentFeatures.map { it.reifie(emptyList(), emptyList()) }.toSet()
-                )
-        }
-
-        val applicationScopeDependencies: List<Dependency> = roundEnvironment
-            .getScopeLevelDependencies(ApplicationScope::class)
-            .map { it.second }
-        val featuresScopeDependencies: Set<Pair<String?, Dependency>> = roundEnvironment
-            .getScopeLevelDependencies(ApplicationScope::class)
-
-
+//        val features: Set<Attribute.Class> = includeFeatures + childFeatures
+//
+//        if (features.size > includeFeatures.size + childFeatures.size) {
+//            val duplicates = includeFeatures.intersect(childFeatures)
+//            throw FeatureIsChildAndIncludedException(duplicates.map {
+//                it.classType.asElement().qualifiedName.toString()
+//            })
+//        }
+//
+//        features.forEach { feature ->
+//            val featureElement = feature.classType.asElement()
+//            val featureAnnotation = featureElement.annotationMirrors.find {
+//                (it.annotationType as Type.ClassType).toClassName().canonicalName == MacheteFeature::class.java.canonicalName
+//            }
+//            if (featureAnnotation == null) {
+//                throw ClassIsNotAnnotatedException(featureElement.qualifiedName.toString())
+//            } else {
+//                // TODO берем dependencies фичи, и реализуем AppComponent как DependencyResolver
+//            }
+//        }
+//
+//        val independentFeatures =
+//            featuresMirrors.filter { it.childFeatures.isEmpty() && it.includesFeatures.isEmpty() }
+//
+//        val features = if (independentFeatures.isEmpty()) {
+//            if (featuresMirrors.isEmpty()) {
+//                // all right, just no features are defined
+//                emptySet()
+//            } else {
+//                throw CyclicFeatureDependenciesException(featuresMirrors.map(FeatureMirror::name))
+//            }
+//        } else {
+//            featuresMirrors
+//                .subtract(independentFeatures)
+//                .resolveFeatures(
+//                    independentFeatures.map { it.reifie(emptyList(), emptyList()) }.toSet()
+//                )
+//        }
+//
+//        val application = applicationMirror.resolveFeatures(features)
+//
+//
+//        val applicationScopeDependencies: List<Dependency> = roundEnvironment
+//            .getScopeLevelDependencies(ApplicationScope::class)
+//            .map { it.second }
+//        val featuresScopeDependencies: Set<Pair<String?, Dependency>> = roundEnvironment
+//            .getScopeLevelDependencies(FeatureScope::class)
+//
+//
 //        val applicationClassName = application.toClassName()
 //        val rootScope = roundEnvironment.generateRootScope(application, applicationClassName)
 //        val scopesCores = roundEnvironment.generateScopesBy(
@@ -84,55 +122,6 @@ class MacheteProcessor : AbstractProcessor() {
 //
 //        DakkerBuilder(application.toClassName(), scopesCores).build().write()
         return true
-    }
-
-    private fun Set<FeatureMirror>.resolveFeatures(resolvedFeatures: Set<Feature>): Set<Feature> {
-        val resolvedMirrors = mutableSetOf<FeatureMirror>()
-
-        val newResolved = this.mapNotNull { unresolvedFeature ->
-            val resolvedIncludes = unresolvedFeature
-                .includesFeatures
-                .map { includedFeature ->
-                    val resolved = resolvedFeatures.find { it.name == includedFeature }
-                    resolved ?: return@mapNotNull null
-                }
-
-            val resolvedChild = unresolvedFeature
-                .childFeatures
-                .map { child ->
-                    val resolved = resolvedFeatures.find { it.name == child }
-                    resolved ?: return@mapNotNull null
-                }
-
-            resolvedMirrors.add(unresolvedFeature)
-            unresolvedFeature.reifie(resolvedIncludes, resolvedChild)
-        }
-
-        return when {
-            resolvedMirrors.isEmpty() -> throw CyclicFeatureDependencies(this.map(FeatureMirror::name))
-            this.size == newResolved.size -> resolvedFeatures + newResolved
-            else -> this.subtract(resolvedMirrors).resolveFeatures(resolvedFeatures + newResolved)
-        }
-    }
-
-    private fun RoundEnvironment.getApplicationMirror(): ApplicationMirror? {
-        val annotatedApplications =
-            getElementsAnnotatedWith(MacheteApplication::class.java) ?: emptySet()
-
-        val element = when {
-            annotatedApplications.isEmpty() -> return null
-            else -> annotatedApplications.singleOrNull()
-                ?: throw MoreThanOneMacheteApplicationException()
-        }
-
-        return element.toApplicationMirror()
-    }
-
-
-    private fun RoundEnvironment.getFeaturesMirrors(): Set<FeatureMirror> {
-        return (getElementsAnnotatedWith(MacheteFeature::class.java) ?: emptySet())
-            .mapNotNull(Element::toFeatureMirror)
-            .toSet()
     }
 
     private fun RoundEnvironment.getScopeLevelDependencies(
@@ -164,7 +153,7 @@ class MacheteProcessor : AbstractProcessor() {
         for (annotation in annotationMirrors) {
             for (pair in annotation.values) {
                 when (pair.fst.simpleName.toString()) {
-                    "featureName" -> return pair.snd.value as String
+                    "feature" -> return pair.snd.value as String
                 }
             }
         }
@@ -234,9 +223,14 @@ class MacheteProcessor : AbstractProcessor() {
 
         (getElementsAnnotatedWith(coreMarker.java) ?: emptySet())
             .asSequence()
-            // Core of scope must be class
-            .map { it.toClassSymbol() ?: throw IllegalAnnotationUsageException(coreMarker) }
-            // Core of scope must implement Destroyable or LifecycleOwner, to Dakker can trash all scope onDestroy event
+            .map {
+                // Core of scope must be class
+                if (this !is Symbol.ClassSymbol) {
+                    throw IllegalAnnotationUsageException(coreMarker)
+                }
+                this as Symbol.ClassSymbol
+            }
+            // Core of scope must implement Destroyable or LifecycleOwner, to Machete can trash all scope onDestroy event
             .onEach(Symbol.ClassSymbol::checkOnDestroyable)
             .map {
                 val coreClassName = it.toClassName()
@@ -341,7 +335,9 @@ class MacheteProcessor : AbstractProcessor() {
     }
 
     private fun wasProviderAddedToCollection(wasAdded: Boolean, element: Symbol.ClassSymbol) {
-        if (!wasAdded) throw DependenciesConflictException(element.qualifiedName.toString())
+        if (!wasAdded) throw DependenciesConflictException(
+            element.qualifiedName.toString()
+        )
     }
 
     private fun Symbol.ClassSymbol.getRequestedDependencies(): Set<DependencyLegacy> {

@@ -3,6 +3,7 @@ package dm.uporov.list.generated
 import dm.uporov.analytics.Analytics
 import dm.uporov.list.ListActivity
 import dm.uporov.list.ListPresenter
+import dm.uporov.machete.exception.MacheteIsNotInitializedException
 import dm.uporov.machete.provider.Provider
 
 private lateinit var listActivityComponentInstance: ListActivityComponent
@@ -13,7 +14,7 @@ fun setListActivityComponentInstance(instance: ListActivityComponent) {
 
 fun getListActivityComponent(): ListActivityComponent {
     if (!::listActivityComponentInstance.isInitialized) throw
-    dm.uporov.machete.exception.MacheteIsNotInitializedException()
+    MacheteIsNotInitializedException()
 
     return listActivityComponentInstance
 }

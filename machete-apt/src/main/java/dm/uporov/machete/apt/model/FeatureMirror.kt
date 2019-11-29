@@ -4,30 +4,24 @@ import com.squareup.kotlinpoet.TypeName
 
 data class FeatureMirror(
     val coreClass: TypeName,
-    val name: String,
     val includesFeatures: List<String>,
     val childFeatures: List<String>,
     val dependencies: List<Dependency>
 )
 
 fun FeatureMirror.reifie(
-    includesFeatures: List<Feature>,
-    childFeatures: List<Feature>
-) = Feature(
+    includesFeatures: List<LegacyFeature>,
+    childFeatures: List<LegacyFeature>
+) = LegacyFeature(
     coreClass = coreClass,
-    name = name,
     includesFeatures = includesFeatures,
     childFeatures = childFeatures,
     dependencies = dependencies
 )
 
-data class Feature(
+data class LegacyFeature(
     val coreClass: TypeName,
-    val name: String,
-    val includesFeatures: List<Feature>,
-    val childFeatures: List<Feature>,
+    val includesFeatures: List<LegacyFeature>,
+    val childFeatures: List<LegacyFeature>,
     val dependencies: List<Dependency>
 )
-
-
-

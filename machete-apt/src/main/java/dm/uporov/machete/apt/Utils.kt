@@ -9,8 +9,8 @@ import com.sun.tools.javac.util.Name
 import dm.uporov.machete.apt.legacy_model.DependencyLegacy
 import dm.uporov.machete.Destroyable
 import dm.uporov.machete.apt.model.Dependency
-import dm.uporov.machete.exception.GenericInDependencyException
-import dm.uporov.machete.exception.IncorrectCoreOfScopeException
+import dm.uporov.machete.exception_legacy.GenericInDependencyException
+import dm.uporov.machete.exception_legacy.IncorrectCoreOfScopeException
 import javax.lang.model.element.Element
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
@@ -83,7 +83,9 @@ fun TypeName.javaToKotlinType(): TypeName =
 
 private fun String.flatGenerics(): String {
     val qualifiedName = substringBefore("<")
-    if (!qualifiedName.contains(".")) throw GenericInDependencyException(this)
+    if (!qualifiedName.contains(".")) throw GenericInDependencyException(
+        this
+    )
 
     val name = qualifiedName.substringAfterLast(".")
     val intoGeneric = substringAfter("<", "").substringBeforeLast(">", "")
@@ -101,12 +103,6 @@ private fun String.flatGenerics(): String {
 fun Set<Pair<Int, DependencyLegacy>>.toGroupedMap() = asSequence()
     .groupBy(Pair<Int, DependencyLegacy>::first) { it.second }
     .mapValues { it.value.toSet() }
-
-fun Element.toClassSymbol(): Symbol.ClassSymbol? {
-    return if (this is Symbol.ClassSymbol) this else null
-}
-
-fun Element.toClassName() = ClassName.bestGuess(asType().asTypeName().toString())
 
 fun Symbol.ClassSymbol.checkOnDestroyable() {
     if (!isImplementedOneOfInterfaces(LifecycleOwner::class, Destroyable::class)) {

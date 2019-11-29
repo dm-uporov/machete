@@ -1,4 +1,4 @@
-package dm.uporov.machete.exception
+package dm.uporov.machete.exception_legacy
 
 import kotlin.reflect.KClass
 

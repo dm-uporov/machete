@@ -1,5 +1,6 @@
 package dm.uporov.machete.apt
 
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asTypeName
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.apt.model.ApplicationMirror
@@ -17,8 +18,8 @@ fun Element.toApplicationMirror(): ApplicationMirror? {
     for (annotation in annotationMirrors) {
         for (pair in annotation.values) {
             when (pair.fst.simpleName.toString()) {
-                "includesFeatures" -> includesFeatures = (pair.snd.value as Array<String>).toList()
-                "childFeatures" -> childFeatures = (pair.snd.value as Array<String>).toList()
+                "includesFeatures" -> includesFeatures = pair.snd.value as List<String>
+                "childFeatures" -> childFeatures = pair.snd.value as List<String>
                 // TODO "dependencies"
             }
         }
@@ -54,11 +55,16 @@ internal fun Element.toFeatureMirror(): FeatureMirror? {
 
     return FeatureMirror(
         coreClass,
-        name ?: return null,
         includesFeatures,
         childFeatures,
         // TODO dependencies
         emptyList()
     )
 }
+
+fun Element.toClassSymbol(): Symbol.ClassSymbol? {
+    return if (this is Symbol.ClassSymbol) this else null
+}
+
+fun Element.toClassName() = ClassName.bestGuess(asType().asTypeName().toString())
 
