@@ -1,4 +1,4 @@
-package dm.uporov.machete.apt
+package dm.uporov.machete.apt.utils
 
 import androidx.lifecycle.LifecycleOwner
 import com.squareup.kotlinpoet.*
@@ -6,12 +6,11 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
 import com.sun.tools.javac.util.Name
-import dm.uporov.machete.apt.legacy_model.DependencyLegacy
 import dm.uporov.machete.Destroyable
+import dm.uporov.machete.apt.legacy_model.DependencyLegacy
 import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.exception_legacy.GenericInDependencyException
 import dm.uporov.machete.exception_legacy.IncorrectCoreOfScopeException
-import javax.lang.model.element.Element
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName

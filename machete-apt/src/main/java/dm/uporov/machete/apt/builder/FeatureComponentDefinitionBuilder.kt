@@ -3,8 +3,8 @@ package dm.uporov.machete.apt.builder
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
-import dm.uporov.machete.apt.flatGenerics
-import dm.uporov.machete.apt.toClassName
+import dm.uporov.machete.apt.utils.flatGenerics
+import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName

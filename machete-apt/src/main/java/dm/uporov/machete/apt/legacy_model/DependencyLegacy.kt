@@ -1,7 +1,7 @@
 package dm.uporov.machete.apt.legacy_model
 
 import com.squareup.kotlinpoet.TypeName
-import dm.uporov.machete.apt.flatGenerics
+import dm.uporov.machete.apt.utils.flatGenerics
 
 data class DependencyLegacy constructor(
     val typeName: TypeName,

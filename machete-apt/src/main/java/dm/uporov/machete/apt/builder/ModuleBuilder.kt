@@ -3,11 +3,12 @@ package dm.uporov.machete.apt.builder
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import dm.uporov.machete.apt.legacy_model.DependencyLegacy
-import dm.uporov.machete.apt.moduleName
+import dm.uporov.machete.apt.utils.moduleName
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
+private const val DAKKER_FILE_NAME = "Dakker"
 private const val FILE_NAME_FORMAT = "$DAKKER_FILE_NAME%s"
 private const val PROVIDER_NAME_FORMAT = "%sProvider"
 

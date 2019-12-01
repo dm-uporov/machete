@@ -1,7 +1,7 @@
 package dm.uporov.machete.apt.model
 
 import com.squareup.kotlinpoet.TypeName
-import dm.uporov.machete.apt.flatGenerics
+import dm.uporov.machete.apt.utils.flatGenerics
 
 data class Dependency(
     val typeName: TypeName,

@@ -1,18 +1,18 @@
 package dm.uporov.app.generated
 
-import dm.uporov.list.generated.ListActivityComponentDefinition
-import dm.uporov.list.generated.setListActivityComponentDefinition
-import dm.uporov.list.generated.setListActivityComponentDependenciesResolver
+import dm.uporov.list.ListActivity_ComponentDefinition
+import dm.uporov.list.setListActivity_ComponentDefinition
+import dm.uporov.list.setListActivity_ComponentDependencies
 
 object Machete {
 
     fun startMachete(
-        appComponent: AppComponentDefinition,
-        listActivityComponent: ListActivityComponentDefinition
+        appComponent: AppComponent,
+        listActivityComponent: ListActivity_ComponentDefinition
     ) {
         setAppComponentInstance(appComponent)
-        setListActivityComponentDefinition(listActivityComponent)
-        setListActivityComponentDependenciesResolver(
+        setListActivity_ComponentDefinition(listActivityComponent)
+        setListActivity_ComponentDependencies(
             ListActivityComponentResolver(appComponent)
         )
     }

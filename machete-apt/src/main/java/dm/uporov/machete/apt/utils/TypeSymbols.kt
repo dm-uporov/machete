@@ -1,4 +1,4 @@
-package dm.uporov.machete.apt
+package dm.uporov.machete.apt.utils
 
 import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
@@ -37,6 +37,7 @@ fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*> = MacheteFeature::c
         // TODO можно внутрь рекурсии передавать список фич - цепочку от корневого.
         //  Если наткнулись на уже имеющийся в списке, кидаем исключение "зацикленные зависимости"
         includeFeatures = includeFeaturesParam.toTypeSymbols().map { it.asFeature() }.toSet(),
+        // TODO -- // --
         childFeatures = childFeaturesParam.toTypeSymbols().map { it.asFeature() }.toSet(),
         dependencies = dependenciesParam.toTypeSymbols().toList()
     )

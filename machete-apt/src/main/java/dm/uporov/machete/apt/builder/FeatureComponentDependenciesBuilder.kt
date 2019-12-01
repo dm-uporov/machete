@@ -1,9 +1,9 @@
 package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
-import dm.uporov.machete.apt.flatGenerics
+import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.model.Feature
-import dm.uporov.machete.apt.toClassName
+import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
