@@ -47,8 +47,11 @@ class MacheteFeaturesProcessor : AbstractProcessor() {
             .asSequence()
             .filterIsInstance<Symbol.TypeSymbol>()
             .map { it.asFeature(scopeDependencies[it] ?: emptyList()) }
+            .map(::FeatureComponentBuilder)
             .forEach {
-                FeatureComponentBuilder(it).build().write()
+                it.buildDependencies().write()
+                it.buildDefinition().write()
+                it.buildComponent().write()
             }
 
         return true

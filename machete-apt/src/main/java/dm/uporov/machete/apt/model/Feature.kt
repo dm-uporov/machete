@@ -8,4 +8,6 @@ data class Feature(
     val features: Set<Feature>,
     val dependencies: List<Symbol.TypeSymbol>,
     val internalDependencies: List<Symbol.TypeSymbol>
-)
+) {
+    val scopeDependencies = (dependencies + internalDependencies).distinct()
+}

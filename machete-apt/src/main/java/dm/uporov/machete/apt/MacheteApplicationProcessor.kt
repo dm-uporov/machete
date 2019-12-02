@@ -45,8 +45,11 @@ class MacheteApplicationProcessor : AbstractProcessor() {
                 .toList()
 
         val appFeature = app.asApplicationFeature(scopeDependencies)
-        FeatureComponentBuilder(appFeature).build().write()
-
+        with(FeatureComponentBuilder(appFeature)) {
+            buildDependencies().write()
+            buildDefinition().write()
+            buildComponent().write()
+        }
         return true
     }
 

@@ -9,5 +9,5 @@ data class Module(
     val dependencies: List<Symbol.TypeSymbol>,
     val internalDependencies: List<Symbol.TypeSymbol>
 ) {
-    val scopeDependencies = (provideDependencies + internalDependencies).toSet()
+    val scopeDependencies = (provideDependencies + internalDependencies).distinct()
 }

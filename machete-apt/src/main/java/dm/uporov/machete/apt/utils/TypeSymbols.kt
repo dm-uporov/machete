@@ -10,10 +10,16 @@ import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
-fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
-    featureAnnotation = MacheteApplication::class,
-    internalDependencies = internalDependencies
-)
+fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) =
+    asFeature(
+        featureAnnotation = MacheteApplication::class,
+        internalDependencies = internalDependencies
+    ).let {
+        it.copy(
+            dependencies = emptyList(),
+            internalDependencies = (it.dependencies + it.internalDependencies).distinct()
+        )
+    }
 
 fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
     featureAnnotation = MacheteFeature::class,
