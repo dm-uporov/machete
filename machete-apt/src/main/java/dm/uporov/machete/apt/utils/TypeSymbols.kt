@@ -41,10 +41,9 @@ private fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*>): Feature {
 
     return Feature(
         coreClass = this,
-        // TODO можно внутрь рекурсии передавать список фич - цепочку от корневого.
-        //  Если наткнулись на уже имеющийся в списке, кидаем исключение "зацикленные зависимости"
+        // TODO не проваливаться на несколько уровней. Хватит информации просто из дочерних
         modules = modulesParam.toTypeSymbols().map { it.asModule() }.toSet(),
-        // TODO -- // --
+        // TODO не проваливаться на несколько уровней. Хватит информации просто из дочерних
         features = featuresParam.toTypeSymbols().map { it.asFeature() }.toSet(),
         dependencies = dependenciesParam.toTypeSymbols().toList()
     )
