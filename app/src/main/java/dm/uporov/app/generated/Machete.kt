@@ -1,7 +1,7 @@
 package dm.uporov.app.generated
 
-import dm.uporov.analytics.generated.CoreAnalyticsModuleDefinition
-import dm.uporov.analytics.generated.setCoreAnalyticsModuleDefinition
+import dm.uporov.analytics.CoreAnalytics_ModuleDefinition
+import dm.uporov.analytics.setCoreAnalytics_ModuleDefinition
 import dm.uporov.app.generated.AppComponent.Companion.appComponent
 import dm.uporov.list.ListActivity_ComponentDefinition
 import dm.uporov.list.setListActivity_ComponentDefinition
@@ -12,7 +12,7 @@ object Machete {
     fun startMachete(
         appComponentDefinition: AppComponentDefinition,
         listActivityComponentDefinition: ListActivity_ComponentDefinition,
-        coreAnalyticsModuleDefinition: CoreAnalyticsModuleDefinition
+        coreAnalyticsModuleDefinition: CoreAnalytics_ModuleDefinition
     ) {
         val appComponent = appComponent(
             appComponentDefinition,
@@ -24,6 +24,6 @@ object Machete {
         setListActivity_ComponentDependencies(
             ListActivityComponentResolver(appComponent)
         )
-        setCoreAnalyticsModuleDefinition(coreAnalyticsModuleDefinition)
+        setCoreAnalytics_ModuleDefinition(coreAnalyticsModuleDefinition)
     }
 }

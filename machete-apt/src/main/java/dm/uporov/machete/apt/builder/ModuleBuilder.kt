@@ -6,16 +6,18 @@ import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
-import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
-import kotlin.reflect.jvm.internal.impl.name.FqName
 
 private const val MODULE_CLASS_NAME_FORMAT = "%s_Module"
 private const val MODULE_DEPENDENCIES_CLASS_NAME_FORMAT = "%s_ModuleDependencies"
+private const val MODULE_DEFINITION_CLASS_NAME_FORMAT = "%s_ModuleDefinition"
 private const val GETTER_NAME_FORMAT = "get%s"
 
 private fun String.asModuleClassName() = MODULE_CLASS_NAME_FORMAT.format(this)
 private fun String.asModuleDependenciesClassName() =
     MODULE_DEPENDENCIES_CLASS_NAME_FORMAT.format(this)
+
+private fun String.asModuleDefinitionClassName() =
+    MODULE_DEFINITION_CLASS_NAME_FORMAT.format(this)
 
 private fun String.asGetterName() = GETTER_NAME_FORMAT.format(this)
 
@@ -27,8 +29,14 @@ class ModuleBuilder(
     private val coreClassPackage = coreClassName.packageName
     private val coreClassSimpleName = coreClassName.simpleName
     private val moduleName = coreClassSimpleName.asModuleClassName()
-    private val moduleClassName = ClassName.bestGuess("$coreClassPackage.$moduleName")
-    private val typeT = TypeVariableName("T")
+    private val moduleClassName =
+        ClassName.bestGuess("$coreClassPackage.$moduleName")
+    private val moduleDependenciesName = coreClassSimpleName.asModuleDependenciesClassName()
+    private val moduleDependenciesClassName =
+        ClassName.bestGuess("$coreClassPackage.$moduleDependenciesName")
+    private val moduleDefinitionName = coreClassSimpleName.asModuleDefinitionClassName()
+    private val moduleDefinitionClassName =
+        ClassName.bestGuess("$coreClassPackage.$moduleDefinitionName")
 
     fun build(): FileSpec {
         return FileSpec.builder(coreClassPackage, moduleName)
@@ -36,80 +44,15 @@ class ModuleBuilder(
             .addImport("dm.uporov.machete.provider", "single", "factory")
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withModuleDependenciesInterface()
-            .withModuleDefenition()
-//            .withDependenciesField()
-//            .withGetFunctions()
-//            .withInjectFunctions()
+            .withDefinitionField()
+            .withGetFunctions()
+            .withModuleDefinition()
             .build()
-    }
-
-    private fun FileSpec.Builder.withDependenciesField() = apply {
-        addProperty(
-            PropertySpec.builder(
-                "dependencies",
-                moduleClassName,
-                KModifier.PRIVATE, KModifier.LATEINIT
-            )
-                .mutable(true)
-                .build()
-        )
-        addFunction(
-            FunSpec.builder("set$moduleName")
-                .addParameter("dependenciesResolver", moduleClassName)
-                .addStatement("dependencies = dependenciesResolver")
-                .build()
-        )
-        addFunction(
-            FunSpec.builder("getDependencies")
-                .addModifiers(KModifier.PRIVATE)
-                .returns(moduleClassName)
-                .addStatement("if (!::dependencies.isInitialized) throw MacheteIsNotInitializedException()")
-                .addStatement(" return dependencies")
-                .build()
-        )
-    }
-
-    private fun FileSpec.Builder.withGetFunctions() = apply {
-        module.dependencies.forEach {
-            val dependencyType = it.asType().asTypeName()
-            val uniqueName = dependencyType.flatGenerics()
-            addFunction(
-                FunSpec.builder("get${uniqueName.capitalize()}")
-                    .receiver(coreClassName)
-                    .returns(dependencyType)
-                    .addStatement(" return getDependencies().${uniqueName.asProviderName()}.invoke(this)")
-                    .build()
-            )
-        }
-    }
-
-    private fun FileSpec.Builder.withInjectFunctions() = apply {
-        module.dependencies.forEach {
-            val dependencyType = it.asType().asTypeName()
-            val uniqueName = dependencyType.flatGenerics()
-
-            val lazy =
-                JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(dependencyType.toString()))
-                    ?.asSingleFqName()
-                    ?.asString()
-                    ?.let {
-                        Lazy::class.asClassName().parameterizedBy(ClassName.bestGuess(it))
-                    } ?: Lazy::class.asClassName().parameterizedBy(dependencyType)
-
-            addFunction(
-                FunSpec.builder("inject${uniqueName.capitalize()}")
-                    .receiver(coreClassName)
-                    .returns(lazy)
-                    .addStatement(" return lazy { getDependencies().${uniqueName.asProviderName()}.invoke(this) }")
-                    .build()
-            )
-        }
     }
 
     private fun FileSpec.Builder.withModuleDependenciesInterface() = apply {
         addType(
-            TypeSpec.interfaceBuilder(coreClassSimpleName.asModuleDependenciesClassName())
-                .addTypeVariable(typeT)
+            TypeSpec.interfaceBuilder(moduleDependenciesName)
                 .withDependenciesGetters()
                 .build()
         )
@@ -121,7 +64,6 @@ class ModuleBuilder(
             val uniqueName = type.flatGenerics()
             addFunction(
                 FunSpec.builder(uniqueName.asGetterName())
-                    .addParameter("scopeCore", typeT)
                     .addModifiers(KModifier.ABSTRACT)
                     .returns(type)
                     .build()
@@ -129,37 +71,117 @@ class ModuleBuilder(
         }
     }
 
-    private fun FileSpec.Builder.withModuleDefenition() = apply {
-        addType(
-            TypeSpec.classBuilder(moduleClassName)
-                .addTypeVariable(typeT)
-                .withProvidersProperties()
-//                .withComponentDefinitionCompanion()
+    private fun FileSpec.Builder.withDefinitionField() = apply {
+        addProperty(
+            PropertySpec.builder(
+                "definition",
+                moduleDefinitionClassName,
+                KModifier.PRIVATE, KModifier.LATEINIT
+            )
+                .mutable(true)
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set$moduleDefinitionName")
+                .addParameter("instance", moduleDefinitionClassName)
+                .addStatement("definition = instance")
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getDefinition")
+                .addModifiers(KModifier.PRIVATE)
+                .returns(moduleDefinitionClassName)
+                .addStatement("if (!::definition.isInitialized) throw MacheteIsNotInitializedException()")
+                .addStatement(" return definition")
                 .build()
         )
     }
 
+    private fun FileSpec.Builder.withGetFunctions() = apply {
+        module.scopeDependencies
+            .forEach {
+                val dependencyType = it.asType().asTypeName()
+                val uniqueName = dependencyType.flatGenerics()
+                addFunction(
+                    FunSpec.builder("get${uniqueName.capitalize()}")
+                        .receiver(moduleDependenciesClassName)
+                        .returns(dependencyType)
+                        .addStatement(" return getDefinition().${uniqueName.asProviderName()}.invoke(this)")
+                        .build()
+                )
+            }
+    }
+
+    private fun FileSpec.Builder.withModuleDefinition() = apply {
+        addType(
+            TypeSpec.classBuilder(moduleDefinitionClassName)
+                .withProvidersProperties()
+                .withModuleDefinitionCompanion()
+                .build()
+        )
+    }
 
     private fun TypeSpec.Builder.withProvidersProperties() = apply {
         val constructorBuilder = FunSpec.constructorBuilder()
             .addModifiers(KModifier.PRIVATE)
-        module.dependencies.forEach {
-            val uniqueName = it.asType().asTypeName().flatGenerics()
-            val providerName = uniqueName.asProviderName()
-            val providerType = Provider::class.asClassName().parameterizedBy(
-                typeT,
-                it.toClassName()
-            )
-            constructorBuilder.addParameter(
-                ParameterSpec.builder(providerName, providerType)
-                    .build()
-            )
-            addProperty(
-                PropertySpec.builder(providerName, providerType)
-                    .initializer(providerName)
-                    .build()
-            )
-        }
+        module.scopeDependencies
+            .forEach {
+                val uniqueName = it.asType().asTypeName().flatGenerics()
+                val providerName = uniqueName.asProviderName()
+                val providerType = Provider::class.asClassName().parameterizedBy(
+                    moduleDependenciesClassName,
+                    it.toClassName()
+                )
+                constructorBuilder.addParameter(
+                    ParameterSpec.builder(providerName, providerType)
+                        .build()
+                )
+                addProperty(
+                    PropertySpec.builder(providerName, providerType)
+                        .initializer(providerName)
+                        .build()
+                )
+            }
         primaryConstructor(constructorBuilder.build())
+    }
+
+    private fun TypeSpec.Builder.withModuleDefinitionCompanion() = apply {
+        addType(
+            TypeSpec.companionObjectBuilder()
+                .addFunction(
+                    FunSpec.builder(moduleDefinitionName.decapitalize())
+                        .returns(moduleDefinitionClassName)
+                        .withProvidersParams()
+                        .addStatement(
+                            """
+                            return $moduleDefinitionName(
+                            ${module.scopeDependencies.joinToString {
+                                val providerName =
+                                    it.asType().asTypeName().flatGenerics().asProviderName()
+                                return@joinToString "$providerName = $providerName"
+                            }}
+                            )
+                            """.trimIndent()
+                        )
+                        .build()
+                )
+                .build()
+        )
+    }
+
+    private fun FunSpec.Builder.withProvidersParams() = apply {
+        module.scopeDependencies
+            .forEach {
+                val uniqueName = it.asType().asTypeName().flatGenerics()
+                val providerName = uniqueName.asProviderName()
+                val providerType = Provider::class.asClassName().parameterizedBy(
+                    moduleDependenciesClassName,
+                    it.toClassName()
+                )
+                addParameter(
+                    ParameterSpec.builder(providerName, providerType)
+                        .build()
+                )
+            }
     }
 }

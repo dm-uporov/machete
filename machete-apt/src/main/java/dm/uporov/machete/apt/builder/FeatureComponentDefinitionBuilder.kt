@@ -157,7 +157,6 @@ class FeatureComponentDefinitionBuilder(
         )
     }
 
-
     private fun FunSpec.Builder.withProvidersParams() = apply {
         dependencies.forEach {
             val uniqueName = it.asType().asTypeName().flatGenerics()

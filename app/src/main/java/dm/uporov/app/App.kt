@@ -3,7 +3,7 @@ package dm.uporov.app
 import android.app.Application
 import android.content.Context
 import dm.uporov.analytics.CoreAnalytics
-import dm.uporov.analytics.coreAnalyticsComponentDefinition
+import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.generated.AppComponentDefinition.Companion.appComponentDefinition
 import dm.uporov.app.generated.Machete.startMachete
 import dm.uporov.app.generated.injectAnalytics
@@ -34,7 +34,7 @@ class App : Application() {
                 appFromListActivityProvider = just { this }
             ),
             listActivityComponentDefinition,
-            coreAnalyticsComponentDefinition
+            coreAnalyticsModuleDefinition
         )
     }
 }

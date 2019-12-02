@@ -3,10 +3,7 @@ package dm.uporov.machete.apt.utils
 import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
-import dm.uporov.machete.annotation.FeatureScope
-import dm.uporov.machete.annotation.MacheteApplication
-import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.machete.annotation.MacheteModule
+import dm.uporov.machete.annotation.*
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.apt.model.ScopeDependency
@@ -42,7 +39,8 @@ private fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*>): Feature {
     return Feature(
         coreClass = this,
         // TODO не проваливаться на несколько уровней. Хватит информации просто из дочерних
-        modules = modulesParam.toTypeSymbols().map { it.asModule() }.toSet(),
+        // TODO убери emptyList
+        modules = modulesParam.toTypeSymbols().map { it.asModule(emptyList()) }.toSet(),
         // TODO не проваливаться на несколько уровней. Хватит информации просто из дочерних
         features = featuresParam.toTypeSymbols().map { it.asFeature() }.toSet(),
         dependencies = dependenciesParam.toTypeSymbols().toList()
@@ -55,7 +53,7 @@ private fun List<Attribute.Class>?.toTypeSymbols(): Sequence<Symbol.TypeSymbol> 
     return this.asSequence().map { it.classType.asElement() }
 }
 
-fun Symbol.TypeSymbol.asModule(): Module {
+fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>): Module {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == MacheteModule::class.qualifiedName
     } ?: throw ClassIsNotAnnotatedException(
@@ -79,13 +77,28 @@ fun Symbol.TypeSymbol.asModule(): Module {
 
     return Module(
         coreClass = this,
-        modules = modulesParam.toTypeSymbols().map { it.asModule() }.toSet(),
-        provide = provideParam.toTypeSymbols().toList(),
-        dependencies = dependenciesParam.toTypeSymbols().toList()
+        // TODO REMOVE RECURSIVE INVOCATION HERE!!! emptyList is incorrect
+        modules = modulesParam.toTypeSymbols().map { it.asModule(emptyList()) }.toSet(),
+        provideDependencies = provideParam.toTypeSymbols().toList(),
+        dependencies = dependenciesParam.toTypeSymbols().toList(),
+        internalDependencies = internalDependencies
     )
 }
 
-fun Symbol.TypeSymbol.asScopeDependency(scopeAnnotation: KClass<*> = FeatureScope::class): ScopeDependency {
+fun Symbol.TypeSymbol.asModuleScopeDependency() = asScopeDependency(
+    scopeAnnotation = ModuleScope::class,
+    featureFieldName = "module"
+)
+
+fun Symbol.TypeSymbol.asFeatureScopeDependency() = asScopeDependency(
+    scopeAnnotation = FeatureScope::class,
+    featureFieldName = "feature"
+)
+
+private fun Symbol.TypeSymbol.asScopeDependency(
+    scopeAnnotation: KClass<*>,
+    featureFieldName: String
+): ScopeDependency {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == scopeAnnotation.qualifiedName
     } ?: throw ClassIsNotAnnotatedException(
@@ -97,7 +110,7 @@ fun Symbol.TypeSymbol.asScopeDependency(scopeAnnotation: KClass<*> = FeatureScop
         val name = it.fst.simpleName.toString()
         val value = it.snd.value
         when (name) {
-            "feature" -> {
+            featureFieldName -> {
                 return ScopeDependency(
                     dependencyClass = this,
                     featureClass = (value as Type.ClassType).asElement()

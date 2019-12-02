@@ -2,7 +2,7 @@ package dm.uporov.app.generated
 
 import android.content.Context
 import dm.uporov.analytics.Analytics
-import dm.uporov.analytics.generated.CoreAnalyticsModuleDefinition
+import dm.uporov.analytics.CoreAnalytics_ModuleDefinition
 import dm.uporov.app.App
 import dm.uporov.list.ListActivity
 import dm.uporov.machete.exception.MacheteIsNotInitializedException
@@ -70,7 +70,7 @@ class AppComponent private constructor(
     companion object {
         fun Machete.appComponent(
             appComponentDefinition: AppComponentDefinition,
-            coreAnalyticsComponentDefinition: CoreAnalyticsModuleDefinition
+            coreAnalyticsComponentDefinition: CoreAnalytics_ModuleDefinition
         ) = AppComponent(
             analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider
                 .mapOwner(just { CoreAnalyticsModuleResolver(it) }),

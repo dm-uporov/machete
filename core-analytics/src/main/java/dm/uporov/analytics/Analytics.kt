@@ -2,9 +2,9 @@ package dm.uporov.analytics
 
 import android.content.Context
 import android.util.Log
-import dm.uporov.machete.annotation.FeatureScope
+import dm.uporov.machete.annotation.ModuleScope
 
-@FeatureScope(feature = CoreAnalytics::class)
+@ModuleScope(module = CoreAnalytics::class)
 interface Analytics {
 
     fun sendEvent(event: String)

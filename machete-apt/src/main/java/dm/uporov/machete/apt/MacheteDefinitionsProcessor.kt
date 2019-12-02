@@ -7,7 +7,7 @@ import dm.uporov.machete.annotation.ApplicationScope
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.machete.apt.builder.FeatureComponentDefinitionBuilder
 import dm.uporov.machete.apt.model.ScopeDependency
-import dm.uporov.machete.apt.utils.asScopeDependency
+import dm.uporov.machete.apt.utils.asFeatureScopeDependency
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -43,7 +43,7 @@ class MacheteDefinitionsProcessor : AbstractProcessor() {
         roundEnvironment.getElementsAnnotatedWith(FeatureScope::class.java)
             .asSequence()
             .filterIsInstance<Symbol.TypeSymbol>()
-            .map { it.asScopeDependency() }
+            .map { it.asFeatureScopeDependency() }
             .groupBy { it.featureClass }
             .mapValues { it.value.map(ScopeDependency::dependencyClass) }
             .forEach { (feature, dependencies) ->
