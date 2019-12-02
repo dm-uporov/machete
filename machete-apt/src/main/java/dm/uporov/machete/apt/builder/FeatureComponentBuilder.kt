@@ -2,40 +2,77 @@ package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.sun.tools.javac.code.Symbol
+import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
+private const val MACHETE_COMPONENT_DEPENDENCIES_CLASS_NAME_FORMAT = "%s_ComponentDependencies"
 private const val MACHETE_COMPONENT_DEFINITION_CLASS_NAME_FORMAT = "%s_ComponentDefinition"
+
+private fun String.asComponentDependenciesClassName() =
+    MACHETE_COMPONENT_DEPENDENCIES_CLASS_NAME_FORMAT.format(this)
 
 private fun String.asComponentDefinitionClassName() =
     MACHETE_COMPONENT_DEFINITION_CLASS_NAME_FORMAT.format(this)
 
-class FeatureComponentDefinitionBuilder(
-    private val feature: Symbol.TypeSymbol,
-    private val dependencies: List<Symbol.TypeSymbol>
+internal class FeatureComponentBuilder(
+    private val feature: Feature
 ) {
 
-    private val coreClassName = feature.toClassName()
+    private val coreClassName = feature.coreClass.toClassName()
     private val coreClassPackage = coreClassName.packageName
     private val coreClassSimpleName = coreClassName.simpleName
+    private val componentDependenciesName = coreClassSimpleName.asComponentDependenciesClassName()
+    private val componentDependenciesClassName =
+        ClassName.bestGuess("$coreClassPackage.$componentDependenciesName")
     private val componentDefinitionName = coreClassSimpleName.asComponentDefinitionClassName()
     private val componentDefinitionClassName =
         ClassName.bestGuess("$coreClassPackage.$componentDefinitionName")
 
+
     fun build(): FileSpec {
-        return FileSpec.builder(coreClassPackage, componentDefinitionName)
+        return FileSpec.builder(coreClassPackage, componentDependenciesName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory")
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
+            .withComponentDependenciesInterface()
+            .withDependenciesField()
             .withDefinitionField()
-            .withGetFunctions()
-            .withInjectFunctions()
+            .withDependenciesGetFunctions()
+            .withDependenciesInjectFunctions()
+            .withInternalDependenciesGetFunctions()
+            .withInternalDependenciesInjectFunctions()
             .withComponentDefinition()
             .build()
+    }
+
+    private fun FileSpec.Builder.withDependenciesField() = apply {
+        addProperty(
+            PropertySpec.builder(
+                "dependencies",
+                componentDependenciesClassName,
+                KModifier.PRIVATE, KModifier.LATEINIT
+            )
+                .mutable(true)
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set$componentDependenciesName")
+                .addParameter("dependenciesResolver", componentDependenciesClassName)
+                .addStatement("dependencies = dependenciesResolver")
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getDependencies")
+                .addModifiers(KModifier.PRIVATE)
+                .returns(componentDependenciesClassName)
+                .addStatement("if (!::dependencies.isInitialized) throw MacheteIsNotInitializedException()")
+                .addStatement(" return dependencies")
+                .build()
+        )
     }
 
     private fun FileSpec.Builder.withDefinitionField() = apply {
@@ -64,8 +101,45 @@ class FeatureComponentDefinitionBuilder(
         )
     }
 
-    private fun FileSpec.Builder.withGetFunctions() = apply {
-        dependencies.forEach {
+    private fun FileSpec.Builder.withDependenciesGetFunctions() = apply {
+        feature.dependencies.forEach {
+            val dependencyType = it.asType().asTypeName()
+            val uniqueName = dependencyType.flatGenerics()
+            addFunction(
+                FunSpec.builder("get${uniqueName.capitalize()}")
+                    .receiver(coreClassName)
+                    .returns(dependencyType)
+                    .addStatement(" return getDependencies().${uniqueName.asProviderName()}.invoke(this)")
+                    .build()
+            )
+        }
+    }
+
+    private fun FileSpec.Builder.withDependenciesInjectFunctions() = apply {
+        feature.dependencies.forEach {
+            val dependencyType = it.asType().asTypeName()
+            val uniqueName = dependencyType.flatGenerics()
+
+            val lazy =
+                JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(dependencyType.toString()))
+                    ?.asSingleFqName()
+                    ?.asString()
+                    ?.let {
+                        Lazy::class.asClassName().parameterizedBy(ClassName.bestGuess(it))
+                    } ?: Lazy::class.asClassName().parameterizedBy(dependencyType)
+
+            addFunction(
+                FunSpec.builder("inject${uniqueName.capitalize()}")
+                    .receiver(coreClassName)
+                    .returns(lazy)
+                    .addStatement(" return lazy { getDependencies().${uniqueName.asProviderName()}.invoke(this) }")
+                    .build()
+            )
+        }
+    }
+
+    private fun FileSpec.Builder.withInternalDependenciesGetFunctions() = apply {
+        feature.internalDependencies.forEach {
             val dependencyType = it.asType().asTypeName()
             val uniqueName = dependencyType.flatGenerics()
             addFunction(
@@ -78,8 +152,8 @@ class FeatureComponentDefinitionBuilder(
         }
     }
 
-    private fun FileSpec.Builder.withInjectFunctions() = apply {
-        dependencies.forEach {
+    private fun FileSpec.Builder.withInternalDependenciesInjectFunctions() = apply {
+        feature.internalDependencies.forEach {
             val dependencyType = it.asType().asTypeName()
             val uniqueName = dependencyType.flatGenerics()
 
@@ -101,19 +175,42 @@ class FeatureComponentDefinitionBuilder(
         }
     }
 
+    private fun FileSpec.Builder.withComponentDependenciesInterface() = apply {
+        addType(
+            TypeSpec.interfaceBuilder(componentDependenciesClassName)
+                .withDependenciesProvidersProperties()
+                .build()
+        )
+    }
+
+    private fun TypeSpec.Builder.withDependenciesProvidersProperties() = apply {
+        feature.dependencies.forEach {
+            val uniqueName = it.asType().asTypeName().flatGenerics()
+            addProperty(
+                PropertySpec.builder(
+                    uniqueName.asProviderName(),
+                    Provider::class.asClassName().parameterizedBy(
+                        coreClassName,
+                        it.toClassName()
+                    )
+                ).build()
+            )
+        }
+    }
+
     private fun FileSpec.Builder.withComponentDefinition() = apply {
         addType(
             TypeSpec.classBuilder(componentDefinitionClassName)
-                .withProvidersProperties()
+                .withDefinitionsProvidersProperties()
                 .withComponentDefinitionCompanion()
                 .build()
         )
     }
 
-    private fun TypeSpec.Builder.withProvidersProperties() = apply {
+    private fun TypeSpec.Builder.withDefinitionsProvidersProperties() = apply {
         val constructorBuilder = FunSpec.constructorBuilder()
             .addModifiers(KModifier.PRIVATE)
-        dependencies.forEach {
+        feature.internalDependencies.forEach {
             val uniqueName = it.asType().asTypeName().flatGenerics()
             val providerName = uniqueName.asProviderName()
             val providerType = Provider::class.asClassName().parameterizedBy(
@@ -143,7 +240,7 @@ class FeatureComponentDefinitionBuilder(
                         .addStatement(
                             """
                             return $componentDefinitionName(
-                            ${dependencies.joinToString {
+                            ${feature.internalDependencies.joinToString {
                                 val providerName =
                                     it.asType().asTypeName().flatGenerics().asProviderName()
                                 return@joinToString "$providerName = $providerName"
@@ -158,7 +255,7 @@ class FeatureComponentDefinitionBuilder(
     }
 
     private fun FunSpec.Builder.withProvidersParams() = apply {
-        dependencies.forEach {
+        feature.internalDependencies.forEach {
             val uniqueName = it.asType().asTypeName().flatGenerics()
             val providerName = uniqueName.asProviderName()
             val providerType = Provider::class.asClassName().parameterizedBy(

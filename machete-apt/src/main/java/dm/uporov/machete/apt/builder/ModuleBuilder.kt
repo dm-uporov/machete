@@ -21,16 +21,14 @@ private fun String.asModuleDefinitionClassName() =
 
 private fun String.asGetterName() = GETTER_NAME_FORMAT.format(this)
 
-class ModuleBuilder(
+internal class ModuleBuilder(
     private val module: Module
 ) {
 
     private val coreClassName = module.coreClass.toClassName()
     private val coreClassPackage = coreClassName.packageName
     private val coreClassSimpleName = coreClassName.simpleName
-    private val moduleName = coreClassSimpleName.asModuleClassName()
-    private val moduleClassName =
-        ClassName.bestGuess("$coreClassPackage.$moduleName")
+
     private val moduleDependenciesName = coreClassSimpleName.asModuleDependenciesClassName()
     private val moduleDependenciesClassName =
         ClassName.bestGuess("$coreClassPackage.$moduleDependenciesName")
@@ -39,8 +37,7 @@ class ModuleBuilder(
         ClassName.bestGuess("$coreClassPackage.$moduleDefinitionName")
 
     fun build(): FileSpec {
-        return FileSpec.builder(coreClassPackage, moduleName)
-            .addImport(coreClassPackage, coreClassSimpleName)
+        return FileSpec.builder(coreClassPackage, coreClassSimpleName.asModuleClassName())
             .addImport("dm.uporov.machete.provider", "single", "factory")
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withModuleDependenciesInterface()

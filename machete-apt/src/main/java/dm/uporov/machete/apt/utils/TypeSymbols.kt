@@ -10,11 +10,21 @@ import dm.uporov.machete.apt.model.ScopeDependency
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
-fun Symbol.TypeSymbol.asApplicationFeature() = asFeature(MacheteApplication::class)
+fun Symbol.TypeSymbol.asApplicationFeature() = asFeature(
+    featureAnnotation = MacheteApplication::class,
+    // TODO internalDependencies
+    internalDependencies = emptyList()
+)
 
-fun Symbol.TypeSymbol.asFeature() = asFeature(MacheteFeature::class)
+fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
+    featureAnnotation = MacheteFeature::class,
+    internalDependencies = internalDependencies
+)
 
-private fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*>): Feature {
+private fun Symbol.TypeSymbol.asFeature(
+    featureAnnotation: KClass<*>,
+    internalDependencies: List<Symbol.TypeSymbol>
+): Feature {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == featureAnnotation.qualifiedName
     } ?: throw ClassIsNotAnnotatedException(
@@ -42,8 +52,10 @@ private fun Symbol.TypeSymbol.asFeature(featureAnnotation: KClass<*>): Feature {
         // TODO убери emptyList
         modules = modulesParam.toTypeSymbols().map { it.asModule(emptyList()) }.toSet(),
         // TODO не проваливаться на несколько уровней. Хватит информации просто из дочерних
-        features = featuresParam.toTypeSymbols().map { it.asFeature() }.toSet(),
-        dependencies = dependenciesParam.toTypeSymbols().toList()
+        // TODO убери emptyList
+        features = featuresParam.toTypeSymbols().map { it.asFeature(emptyList()) }.toSet(),
+        dependencies = dependenciesParam.toTypeSymbols().toList(),
+        internalDependencies = internalDependencies
     )
 }
 

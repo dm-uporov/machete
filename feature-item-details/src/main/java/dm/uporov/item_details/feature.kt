@@ -1,0 +1,5 @@
+package dm.uporov.item_details
+
+import dm.uporov.item_details.ItemDetailsActivity_ComponentDefinition.Companion.itemDetailsActivity_ComponentDefinition
+
+val itemDetailsComponentDefinition = itemDetailsActivity_ComponentDefinition()

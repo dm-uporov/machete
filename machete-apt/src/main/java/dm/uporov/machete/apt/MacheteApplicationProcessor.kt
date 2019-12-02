@@ -12,8 +12,8 @@ import javax.lang.model.element.TypeElement
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_8) // to support Java 8
-@SupportedOptions(MacheteDependenciesProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
-class MacheteDependenciesProcessor : AbstractProcessor() {
+@SupportedOptions(MacheteApplicationProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+class MacheteApplicationProcessor : AbstractProcessor() {
 
     companion object {
         const val KAPT_KOTLIN_GENERATED_OPTION_NAME = "kapt.kotlin.generated"

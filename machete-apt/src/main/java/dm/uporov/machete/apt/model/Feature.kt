@@ -6,5 +6,6 @@ data class Feature(
     val coreClass: Symbol.TypeSymbol,
     val modules: Set<Module>,
     val features: Set<Feature>,
-    val dependencies: List<Symbol.TypeSymbol>
+    val dependencies: List<Symbol.TypeSymbol>,
+    val internalDependencies: List<Symbol.TypeSymbol>
 )

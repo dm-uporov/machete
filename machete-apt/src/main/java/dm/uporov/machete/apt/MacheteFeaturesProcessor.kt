@@ -3,9 +3,12 @@ package dm.uporov.machete.apt
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import com.sun.tools.javac.code.Symbol
+import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.machete.apt.builder.FeatureComponentDependenciesBuilder
+import dm.uporov.machete.apt.builder.FeatureComponentBuilder
+import dm.uporov.machete.apt.model.ScopeDependency
 import dm.uporov.machete.apt.utils.asFeature
+import dm.uporov.machete.apt.utils.asFeatureScopeDependency
 import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
@@ -13,7 +16,7 @@ import javax.lang.model.element.TypeElement
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_8) // to support Java 8
-@SupportedOptions(MacheteDependenciesProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
+@SupportedOptions(MacheteApplicationProcessor.KAPT_KOTLIN_GENERATED_OPTION_NAME)
 class MacheteFeaturesProcessor : AbstractProcessor() {
 
     companion object {
@@ -33,12 +36,19 @@ class MacheteFeaturesProcessor : AbstractProcessor() {
         roundEnvironment: RoundEnvironment
     ): Boolean {
 
+        val scopeDependencies = roundEnvironment.getElementsAnnotatedWith(FeatureScope::class.java)
+            .asSequence()
+            .filterIsInstance<Symbol.TypeSymbol>()
+            .map { it.asFeatureScopeDependency() }
+            .groupBy { it.featureClass }
+            .mapValues { it.value.map(ScopeDependency::dependencyClass) }
+
         roundEnvironment.getElementsAnnotatedWith(MacheteFeature::class.java)
             .asSequence()
             .filterIsInstance<Symbol.TypeSymbol>()
-            .map { it.asFeature() }
+            .map { it.asFeature(scopeDependencies[it] ?: emptyList()) }
             .forEach {
-                FeatureComponentDependenciesBuilder(it).build().write()
+                FeatureComponentBuilder(it).build().write()
             }
 
         return true

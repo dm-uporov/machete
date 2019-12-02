@@ -1,4 +1,4 @@
-package dm.uporov.list
+package dm.uporov.item_details
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -8,18 +8,12 @@ import dm.uporov.machete.annotation.MacheteFeature
 @MacheteFeature(
     dependencies = [Analytics::class]
 )
-class ListActivity : AppCompatActivity(), ListView {
+class ItemDetailsActivity : AppCompatActivity() {
 
-    private val listPresenter by injectListPresenter()
     private val analytics by injectAnalytics()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        listPresenter.start()
+        analytics.sendEvent("Item details are showed")
     }
-
-    override fun showItems(items: List<String>) {
-        analytics.sendEvent("Items are showed")
-    }
-
 }
