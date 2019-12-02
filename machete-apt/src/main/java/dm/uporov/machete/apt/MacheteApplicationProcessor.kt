@@ -3,7 +3,9 @@ package dm.uporov.machete.apt
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import com.sun.tools.javac.code.Symbol
+import dm.uporov.machete.annotation.ApplicationScope
 import dm.uporov.machete.annotation.MacheteApplication
+import dm.uporov.machete.apt.builder.FeatureComponentBuilder
 import dm.uporov.machete.apt.utils.asApplicationFeature
 import java.io.File
 import javax.annotation.processing.*
@@ -20,12 +22,7 @@ class MacheteApplicationProcessor : AbstractProcessor() {
     }
 
     override fun getSupportedAnnotationTypes(): Set<String> {
-        return setOf(
-            MacheteApplication::class.java.name
-//            ,
-//            ApplicationScope::class.java.name,
-//            MacheteFeature::class.java.name
-        )
+        return setOf(MacheteApplication::class.java.name)
     }
 
     override fun getSupportedSourceVersion(): SourceVersion {
@@ -41,14 +38,15 @@ class MacheteApplicationProcessor : AbstractProcessor() {
             .filterIsInstance<Symbol.ClassSymbol>()
             .firstOrNull() ?: return true
 
-        val appFeature = app.asApplicationFeature()
+        val scopeDependencies =
+            roundEnvironment.getElementsAnnotatedWith(ApplicationScope::class.java)
+                .asSequence()
+                .filterIsInstance<Symbol.TypeSymbol>()
+                .toList()
 
-//        appFeature.childFeatures.forEach {
-//            FeatureComponentDependenciesBuilder(it).build().write()
-//        }
-//        appFeature.includeFeatures.forEach {
-//            FeatureComponentDependenciesBuilder(it).build().write()
-//        }
+        val appFeature = app.asApplicationFeature(scopeDependencies)
+        FeatureComponentBuilder(appFeature).build().write()
+
         return true
     }
 

@@ -6,7 +6,7 @@ import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.apt.builder.FeatureComponentBuilder
-import dm.uporov.machete.apt.model.ScopeDependency
+import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.apt.utils.asFeature
 import dm.uporov.machete.apt.utils.asFeatureScopeDependency
 import java.io.File
@@ -41,7 +41,7 @@ class MacheteFeaturesProcessor : AbstractProcessor() {
             .filterIsInstance<Symbol.TypeSymbol>()
             .map { it.asFeatureScopeDependency() }
             .groupBy { it.featureClass }
-            .mapValues { it.value.map(ScopeDependency::dependencyClass) }
+            .mapValues { it.value.map(Dependency::dependencyClass) }
 
         roundEnvironment.getElementsAnnotatedWith(MacheteFeature::class.java)
             .asSequence()

@@ -1,16 +1,8 @@
 package dm.uporov.machete.apt.model
 
-import com.squareup.kotlinpoet.TypeName
-import dm.uporov.machete.apt.utils.flatGenerics
+import com.sun.tools.javac.code.Symbol
 
 data class Dependency(
-    val typeName: TypeName,
-    val state: State
-) {
-
-    val uniqueName: String = typeName.flatGenerics()
-
-    enum class State {
-        PROVIDED, NEED_FOR_PROVIDE, REQUESTED
-    }
-}
+    val dependencyClass: Symbol.TypeSymbol,
+    val featureClass: Symbol.TypeSymbol
+)

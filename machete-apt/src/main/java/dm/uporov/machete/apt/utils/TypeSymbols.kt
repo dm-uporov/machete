@@ -4,16 +4,15 @@ import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
 import dm.uporov.machete.annotation.*
+import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
-import dm.uporov.machete.apt.model.ScopeDependency
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
-fun Symbol.TypeSymbol.asApplicationFeature() = asFeature(
+fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
     featureAnnotation = MacheteApplication::class,
-    // TODO internalDependencies
-    internalDependencies = emptyList()
+    internalDependencies = internalDependencies
 )
 
 fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
@@ -97,20 +96,20 @@ fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>): M
     )
 }
 
-fun Symbol.TypeSymbol.asModuleScopeDependency() = asScopeDependency(
-    scopeAnnotation = ModuleScope::class,
-    featureFieldName = "module"
-)
-
 fun Symbol.TypeSymbol.asFeatureScopeDependency() = asScopeDependency(
     scopeAnnotation = FeatureScope::class,
     featureFieldName = "feature"
 )
 
+fun Symbol.TypeSymbol.asModuleScopeDependency() = asScopeDependency(
+    scopeAnnotation = ModuleScope::class,
+    featureFieldName = "module"
+)
+
 private fun Symbol.TypeSymbol.asScopeDependency(
     scopeAnnotation: KClass<*>,
     featureFieldName: String
-): ScopeDependency {
+): Dependency {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == scopeAnnotation.qualifiedName
     } ?: throw ClassIsNotAnnotatedException(
@@ -123,7 +122,7 @@ private fun Symbol.TypeSymbol.asScopeDependency(
         val value = it.snd.value
         when (name) {
             featureFieldName -> {
-                return ScopeDependency(
+                return Dependency(
                     dependencyClass = this,
                     featureClass = (value as Type.ClassType).asElement()
                 )

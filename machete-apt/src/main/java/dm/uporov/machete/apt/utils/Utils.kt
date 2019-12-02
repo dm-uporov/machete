@@ -1,14 +1,14 @@
 package dm.uporov.machete.apt.utils
 
 import androidx.lifecycle.LifecycleOwner
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asClassName
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
-import com.sun.tools.javac.util.Name
 import dm.uporov.machete.Destroyable
-import dm.uporov.machete.apt.legacy_model.DependencyLegacy
-import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.exception_legacy.GenericInDependencyException
 import dm.uporov.machete.exception_legacy.IncorrectCoreOfScopeException
 import kotlin.reflect.KClass
@@ -16,53 +16,10 @@ import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
 
-fun Symbol.asDependency(
-    state: Dependency.State
-) = Dependency(
-    typeName = enclClass().asType().asTypeName().javaToKotlinType(),
-    state = state
-)
-
-
-
-
-fun Symbol.asDependencyLegacy(parentClassName: Name): DependencyLegacy {
-    if (qualifiedName.toString() == "error.NonExistentClass") {
-        throw RuntimeException("Wrong $parentClassName class definition")
-    }
-    return DependencyLegacy(type.asTypeName().javaToKotlinType())
-}
-
-fun Symbol.ClassSymbol.asDependencyLegacy(isSinglePerScope: Boolean) =
-    asDependencyLegacy(null, isSinglePerScope)
-
-fun Symbol.MethodSymbol.asDependencyLegacy(isSinglePerScope: Boolean) =
-    asDependencyLegacy(paramsAsDependencies(), isSinglePerScope)
-
-private fun Symbol.asDependencyLegacy(params: List<DependencyLegacy>?, isSinglePerScope: Boolean) =
-    DependencyLegacy(
-        enclClass().asType().asTypeName().javaToKotlinType(),
-        isSinglePerScope,
-        params
-    )
-
-fun Symbol.MethodSymbol.paramsAsDependencies(): List<DependencyLegacy> {
-    val params = params()
-    if (params.isNullOrEmpty()) return emptyList()
-
-    return params.map { it.asDependencyLegacy(qualifiedName) }
-}
-
 fun Type.ClassType.toClassName(): ClassName {
     val type = toString()
     return ClassName(type.substringBeforeLast("."), type.substringAfterLast("."))
 }
-
-private const val MODULE_FIELD_NAME_FORMAT = "%sModule"
-
-fun ClassName.moduleName() = MODULE_FIELD_NAME_FORMAT.format(simpleName)
-
-fun ClassName.moduleClassName() = ClassName(packageName, moduleName())
 
 fun TypeName.flatGenerics(): String = toString().flatGenerics()
 
@@ -98,10 +55,6 @@ private fun String.flatGenerics(): String {
         }
     }
 }
-
-fun Set<Pair<Int, DependencyLegacy>>.toGroupedMap() = asSequence()
-    .groupBy(Pair<Int, DependencyLegacy>::first) { it.second }
-    .mapValues { it.value.toSet() }
 
 fun Symbol.ClassSymbol.checkOnDestroyable() {
     if (!isImplementedOneOfInterfaces(LifecycleOwner::class, Destroyable::class)) {
