@@ -1,21 +1,18 @@
 package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
-import dm.uporov.machete.apt.utils.flatGenerics
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import dm.uporov.machete.apt.model.Feature
+import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
 private const val MACHETE_COMPONENT_DEPENDENCIES_CLASS_NAME_FORMAT = "%s_ComponentDependencies"
-private const val PROVIDER_NAME_FORMAT = "%sProvider"
 
 private fun String.asComponentDependenciesClassName() =
     MACHETE_COMPONENT_DEPENDENCIES_CLASS_NAME_FORMAT.format(this)
-
-private fun String.asProviderName() = PROVIDER_NAME_FORMAT.format(this).decapitalize()
 
 class FeatureComponentDependenciesBuilder(
     private val feature: Feature

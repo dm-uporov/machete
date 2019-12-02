@@ -5,21 +5,21 @@ import dm.uporov.analytics.Analytics
 import dm.uporov.machete.provider.Provider
 
 
-class CoreAnalyticsComponentDefinition<T> private constructor(
-    val analyticsProvider: Provider<CoreAnalyticsComponentDependencies<T>, Analytics>
+class CoreAnalyticsComponentDefinition private constructor(
+    val analyticsProvider: Provider<CoreAnalyticsComponentDependencies, Analytics>
 ) {
     companion object {
-        fun <T> T.coreAnalyticsComponentDefinition2(
-            analyticsProvider: Provider<CoreAnalyticsComponentDependencies<T>, Analytics>
-        ): CoreAnalyticsComponentDefinition<T> = CoreAnalyticsComponentDefinition(
+        fun coreAnalyticsComponentDefinition2(
+            analyticsProvider: Provider<CoreAnalyticsComponentDependencies, Analytics>
+        ): CoreAnalyticsComponentDefinition = CoreAnalyticsComponentDefinition(
             analyticsProvider = analyticsProvider
         )
     }
 }
 
-interface CoreAnalyticsComponentDependencies<T> {
+interface CoreAnalyticsComponentDependencies {
 
-    fun getContext(owner: T): Context
+    fun getContext(): Context
 
-    fun getAnalytics(owner: T): Analytics
+    fun getAnalytics(): Analytics
 }

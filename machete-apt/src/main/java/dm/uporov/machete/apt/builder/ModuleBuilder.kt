@@ -2,181 +2,164 @@ package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import dm.uporov.machete.apt.legacy_model.DependencyLegacy
-import dm.uporov.machete.apt.utils.moduleName
+import dm.uporov.machete.apt.model.Module
+import dm.uporov.machete.apt.utils.flatGenerics
+import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
-private const val DAKKER_FILE_NAME = "Dakker"
-private const val FILE_NAME_FORMAT = "$DAKKER_FILE_NAME%s"
-private const val PROVIDER_NAME_FORMAT = "%sProvider"
+private const val MODULE_CLASS_NAME_FORMAT = "%s_Module"
+private const val MODULE_DEPENDENCIES_CLASS_NAME_FORMAT = "%s_ModuleDependencies"
+private const val GETTER_NAME_FORMAT = "get%s"
 
-private const val DAKKER_GET_MODULE_FORMAT = "$DAKKER_FILE_NAME.get%s()"
+private fun String.asModuleClassName() = MODULE_CLASS_NAME_FORMAT.format(this)
+private fun String.asModuleDependenciesClassName() =
+    MODULE_DEPENDENCIES_CLASS_NAME_FORMAT.format(this)
+
+private fun String.asGetterName() = GETTER_NAME_FORMAT.format(this)
 
 class ModuleBuilder(
-    private val coreClassName: ClassName,
-    private val parentCoreClassName: ClassName?,
-    private val rootClassName: ClassName,
-    private val allDependencies: Set<DependencyLegacy>,
-    private val parentDependencies: Set<DependencyLegacy>,
-    private val dependenciesWithoutProviders: Set<DependencyLegacy>,
-    private val scopeDependencies: Set<DependencyLegacy>,
-    private val requestedDependencies: Set<DependencyLegacy>
+    private val module: Module
 ) {
 
-    private val pack: String = coreClassName.packageName
-    private val coreName: String = coreClassName.simpleName
-
-    private val fileName = FILE_NAME_FORMAT.format(coreName)
-    private val moduleName = coreClassName.moduleName()
-
-    private val moduleClassName = ClassName(pack, moduleName)
-    private val coreModuleFromDakkerStatement = DAKKER_GET_MODULE_FORMAT.format(moduleName)
-    private val parentCoreModuleFromDakkerStatement = DAKKER_GET_MODULE_FORMAT.format(parentCoreClassName?.moduleName())
-    private val rootCoreModuleFromDakkerStatement = DAKKER_GET_MODULE_FORMAT.format(rootClassName.moduleName())
+    private val coreClassName = module.coreClass.toClassName()
+    private val coreClassPackage = coreClassName.packageName
+    private val coreClassSimpleName = coreClassName.simpleName
+    private val moduleName = coreClassSimpleName.asModuleClassName()
+    private val moduleClassName = ClassName.bestGuess("$coreClassPackage.$moduleName")
+    private val typeT = TypeVariableName("T")
 
     fun build(): FileSpec {
-        return FileSpec.builder(pack, fileName)
-            .addImport(rootClassName.packageName, DAKKER_FILE_NAME)
+        return FileSpec.builder(coreClassPackage, moduleName)
+            .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory")
-            .withInjectFunctions()
-            .withGetFunctions()
-            .withModuleClass()
+            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
+            .withModuleDependenciesInterface()
+            .withModuleDefenition()
+//            .withDependenciesField()
+//            .withGetFunctions()
+//            .withInjectFunctions()
             .build()
     }
 
-    private fun FileSpec.Builder.withInjectFunctions() = apply {
-        requestedDependencies.forEach {
-
-            val lazy = JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(it.typeName.toString()))
-                ?.asSingleFqName()
-                ?.asString()
-                ?.let {
-                    Lazy::class.asClassName().parameterizedBy(ClassName.bestGuess(it))
-                } ?: Lazy::class.asClassName().parameterizedBy(it.typeName)
-
-            addFunction(
-                FunSpec.builder("inject${it.uniqueName}")
-                    .receiver(coreClassName)
-                    .returns(lazy)
-                    .addStatement(" return lazy { $coreModuleFromDakkerStatement.${it.uniqueName.asProviderParamName()}.invoke(this) }")
-                    .build()
+    private fun FileSpec.Builder.withDependenciesField() = apply {
+        addProperty(
+            PropertySpec.builder(
+                "dependencies",
+                moduleClassName,
+                KModifier.PRIVATE, KModifier.LATEINIT
             )
-        }
+                .mutable(true)
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("set$moduleName")
+                .addParameter("dependenciesResolver", moduleClassName)
+                .addStatement("dependencies = dependenciesResolver")
+                .build()
+        )
+        addFunction(
+            FunSpec.builder("getDependencies")
+                .addModifiers(KModifier.PRIVATE)
+                .returns(moduleClassName)
+                .addStatement("if (!::dependencies.isInitialized) throw MacheteIsNotInitializedException()")
+                .addStatement(" return dependencies")
+                .build()
+        )
     }
 
     private fun FileSpec.Builder.withGetFunctions() = apply {
-        allDependencies.forEach {
+        module.dependencies.forEach {
+            val dependencyType = it.asType().asTypeName()
+            val uniqueName = dependencyType.flatGenerics()
             addFunction(
-                FunSpec.builder("get${it.uniqueName}")
+                FunSpec.builder("get${uniqueName.capitalize()}")
                     .receiver(coreClassName)
-                    .returns(it.typeName)
-                    .addStatement(" return $coreModuleFromDakkerStatement.${it.uniqueName.asProviderParamName()}.invoke(this)")
+                    .returns(dependencyType)
+                    .addStatement(" return getDependencies().${uniqueName.asProviderName()}.invoke(this)")
                     .build()
             )
         }
     }
 
-    private fun FileSpec.Builder.withModuleClass() = apply {
+    private fun FileSpec.Builder.withInjectFunctions() = apply {
+        module.dependencies.forEach {
+            val dependencyType = it.asType().asTypeName()
+            val uniqueName = dependencyType.flatGenerics()
+
+            val lazy =
+                JavaToKotlinClassMap.INSTANCE.mapJavaToKotlin(FqName(dependencyType.toString()))
+                    ?.asSingleFqName()
+                    ?.asString()
+                    ?.let {
+                        Lazy::class.asClassName().parameterizedBy(ClassName.bestGuess(it))
+                    } ?: Lazy::class.asClassName().parameterizedBy(dependencyType)
+
+            addFunction(
+                FunSpec.builder("inject${uniqueName.capitalize()}")
+                    .receiver(coreClassName)
+                    .returns(lazy)
+                    .addStatement(" return lazy { getDependencies().${uniqueName.asProviderName()}.invoke(this) }")
+                    .build()
+            )
+        }
+    }
+
+    private fun FileSpec.Builder.withModuleDependenciesInterface() = apply {
         addType(
-            TypeSpec.classBuilder(moduleName)
-                .withModuleConstructor()
-                .withModuleCompanion()
+            TypeSpec.interfaceBuilder(coreClassSimpleName.asModuleDependenciesClassName())
+                .addTypeVariable(typeT)
+                .withDependenciesGetters()
+                .build()
+        )
+    }
+
+    private fun TypeSpec.Builder.withDependenciesGetters() = apply {
+        module.dependencies.forEach {
+            val type = it.asType().asTypeName()
+            val uniqueName = type.flatGenerics()
+            addFunction(
+                FunSpec.builder(uniqueName.asGetterName())
+                    .addParameter("scopeCore", typeT)
+                    .addModifiers(KModifier.ABSTRACT)
+                    .returns(type)
+                    .build()
+            )
+        }
+    }
+
+    private fun FileSpec.Builder.withModuleDefenition() = apply {
+        addType(
+            TypeSpec.classBuilder(moduleClassName)
+                .addTypeVariable(typeT)
                 .withProvidersProperties()
+//                .withComponentDefinitionCompanion()
                 .build()
         )
     }
 
-    private fun TypeSpec.Builder.withModuleConstructor() = apply {
-        primaryConstructor(
-            FunSpec.constructorBuilder()
-                .withProvidersLambdasParamsOf(allDependencies)
-                .addModifiers(KModifier.PRIVATE)
-                .build()
-        )
-    }
-
-    private fun TypeSpec.Builder.withModuleCompanion() = apply {
-        addType(
-            TypeSpec.companionObjectBuilder()
-                .addFunction(
-                    FunSpec.builder(moduleName.decapitalize())
-                        .receiver(rootClassName)
-                        .returns(moduleClassName)
-                        .withParentCoreProviderParam()
-                        .withProvidersLambdasParamsOf(dependenciesWithoutProviders)
-                        .addStatement("""
-                            return $moduleName(
-                        ${dependenciesWithoutProviders.joinToString {
-                            val name = it.uniqueName.asProviderParamName()
-                            return@joinToString "$name = $name"
-                        }
-                        }
-                        ${if (dependenciesWithoutProviders.isEmpty() || scopeDependencies.isEmpty()) "" else ","}
-                        ${scopeDependencies.joinToString(",\n") { element ->
-                            "${element.uniqueName.asProviderParamName()} = " +
-                                    "${if (element.isSinglePerScope) "single" else "factory"} {\n" +
-                                    "${element.uniqueName}(" +
-                                    (element.params?.joinToString {
-                                        "$coreModuleFromDakkerStatement.${it.uniqueName.asProviderParamName()}.invoke(it)"
-                                    } ?: "") +
-                                    ")" +
-                                    "\n}"
-                        }}
-                        ${if ((dependenciesWithoutProviders.isEmpty() && scopeDependencies.isEmpty()) || parentDependencies.isEmpty()) "" else ","}
-                            ${parentDependencies.joinToString(",\n") {
-                            val providerName = it.uniqueName.asProviderParamName()
-                            "$providerName = factory { " +
-                                    if (parentCoreClassName == rootClassName) {
-                                        "$rootCoreModuleFromDakkerStatement.$providerName.invoke(this)"
-                                    } else {
-                                        "$parentCoreModuleFromDakkerStatement.$providerName.invoke(it.parentCoreProvider()) "
-                                    } +
-                                    "}"
-                        }}
-                            )
-                        """.trimIndent()
-                        )
-                        .build()
-                )
-                .build()
-        )
-    }
 
     private fun TypeSpec.Builder.withProvidersProperties() = apply {
-        allDependencies
-            .map {
-                PropertySpec.builder(
-                    it.uniqueName.asProviderParamName(),
-                    Provider::class.asClassName().parameterizedBy(coreClassName, it.typeName)
-                )
-                    .initializer(it.uniqueName.asProviderParamName())
+        val constructorBuilder = FunSpec.constructorBuilder()
+            .addModifiers(KModifier.PRIVATE)
+        module.dependencies.forEach {
+            val uniqueName = it.asType().asTypeName().flatGenerics()
+            val providerName = uniqueName.asProviderName()
+            val providerType = Provider::class.asClassName().parameterizedBy(
+                typeT,
+                it.toClassName()
+            )
+            constructorBuilder.addParameter(
+                ParameterSpec.builder(providerName, providerType)
                     .build()
-            }.let(::addProperties)
-    }
-
-    private fun FunSpec.Builder.withProvidersLambdasParamsOf(dependencies: Set<DependencyLegacy>) = apply {
-        dependencies.forEach {
-            addParameter(
-                ParameterSpec.builder(
-                    it.uniqueName.asProviderParamName(),
-                    Provider::class.asClassName().parameterizedBy(coreClassName, it.typeName)
-                ).build()
+            )
+            addProperty(
+                PropertySpec.builder(providerName, providerType)
+                    .initializer(providerName)
+                    .build()
             )
         }
+        primaryConstructor(constructorBuilder.build())
     }
-
-    private fun FunSpec.Builder.withParentCoreProviderParam() = apply {
-        if (parentCoreClassName != null && parentCoreClassName != rootClassName) {
-            addParameter(
-                ParameterSpec.builder(
-                    "parentCoreProvider",
-                    LambdaTypeName.get(receiver = coreClassName, returnType = parentCoreClassName)
-                ).build()
-            )
-        }
-    }
-
-    private fun String.asProviderParamName() = PROVIDER_NAME_FORMAT.format(this).decapitalize()
 }

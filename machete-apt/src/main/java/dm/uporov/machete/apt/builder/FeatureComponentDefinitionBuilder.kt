@@ -10,12 +10,9 @@ import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
 private const val MACHETE_COMPONENT_DEFINITION_CLASS_NAME_FORMAT = "%s_ComponentDefinition"
-private const val PROVIDER_NAME_FORMAT = "%sProvider"
 
 private fun String.asComponentDefinitionClassName() =
     MACHETE_COMPONENT_DEFINITION_CLASS_NAME_FORMAT.format(this)
-
-private fun String.asProviderName() = PROVIDER_NAME_FORMAT.format(this).decapitalize()
 
 class FeatureComponentDefinitionBuilder(
     private val feature: Symbol.TypeSymbol,

@@ -55,24 +55,24 @@ class AppComponent private constructor(
 ) {
     companion object {
         fun App.appComponent(
-            coreAnalyticsComponentDefinition: CoreAnalyticsComponentDefinition<App>,
+            coreAnalyticsComponentDefinition: CoreAnalyticsComponentDefinition,
             contextProvider: Provider<App, Context>,
             appFromListActivityProvider: Provider<ListActivity, App>
         ) = AppComponent(
-            analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider.mapOwner(just { Resolver() }),
+            analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider.mapOwner(just { Resolver(it) }),
             contextProvider = contextProvider,
             appFromListActivityProvider = appFromListActivityProvider
         )
     }
 }
 
-class Resolver : CoreAnalyticsComponentDependencies<App> {
-    override fun getContext(owner: App): Context {
-        return owner.getContext()
+class Resolver(private val app: App) : CoreAnalyticsComponentDependencies {
+    override fun getContext(): Context {
+        return app.getContext()
     }
 
-    override fun getAnalytics(owner: App): Analytics {
-        return owner.getAnalytics()
+    override fun getAnalytics(): Analytics {
+        return app.getAnalytics()
     }
 
 }

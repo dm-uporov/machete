@@ -13,8 +13,8 @@ import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.provider.just
 
 @MacheteApplication(
-    includeFeatures = [CoreAnalytics::class],
-    childFeatures = [ListActivity::class],
+    modules = [CoreAnalytics::class],
+    features = [ListActivity::class],
     dependencies = [Context::class]
 )
 class App : Application() {
