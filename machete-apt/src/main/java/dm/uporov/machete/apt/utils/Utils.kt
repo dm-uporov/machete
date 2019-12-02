@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
+import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.code.Type
 import dm.uporov.machete.Destroyable
@@ -14,7 +15,6 @@ import dm.uporov.machete.exception_legacy.IncorrectCoreOfScopeException
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
-
 
 fun Type.ClassType.toClassName(): ClassName {
     val type = toString()
@@ -54,6 +54,12 @@ private fun String.flatGenerics(): String {
             throw GenericInDependencyException(this)
         }
     }
+}
+
+fun List<Attribute.Class>?.toTypeSymbols(): Sequence<Symbol.TypeSymbol> {
+    this ?: return emptySequence()
+
+    return this.asSequence().map { it.classType.asElement() }
 }
 
 fun Symbol.ClassSymbol.checkOnDestroyable() {

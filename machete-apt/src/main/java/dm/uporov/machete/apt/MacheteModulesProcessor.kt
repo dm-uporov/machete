@@ -7,7 +7,7 @@ import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.annotation.ModuleScope
 import dm.uporov.machete.apt.builder.ModuleBuilder
 import dm.uporov.machete.apt.model.Dependency
-import dm.uporov.machete.apt.utils.asModule
+import dm.uporov.machete.apt.utils.asModuleRecursive
 import dm.uporov.machete.apt.utils.asModuleScopeDependency
 import java.io.File
 import javax.annotation.processing.*
@@ -46,7 +46,7 @@ class MacheteModulesProcessor : AbstractProcessor() {
         roundEnvironment.getElementsAnnotatedWith(MacheteModule::class.java)
             .asSequence()
             .filterIsInstance<Symbol.TypeSymbol>()
-            .map { it.asModule(scopeDependencies[it] ?: emptyList()) }
+            .map { it.asModuleRecursive(scopeDependencies[it] ?: emptyList()) }
             .forEach {
                 ModuleBuilder(it).build().write()
             }
