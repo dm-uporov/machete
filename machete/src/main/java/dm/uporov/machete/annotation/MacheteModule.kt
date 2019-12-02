@@ -12,6 +12,8 @@ import kotlin.reflect.KClass
  * Указание здесь какого-либо модуля означает, что мы обязуемся зарезолвить необходимые для него зависимости.
  * Если какая-либо зависимость резолвится уровнем выше, необходимо явно прописать её в dependencies.
  *
+ * @param provide зависимости, предоставляемые модулем в скоуп.
+ *
  * @param dependencies внешние зависимости, необходимые для работы данного модуля.
  * Резолвятся фичами / модулями, которые зависят от данного модуля.
  *
@@ -20,5 +22,6 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS)
 annotation class MacheteModule(
     val modules: Array<KClass<*>> = [],
+    val provide: Array<KClass<*>> = [],
     val dependencies: Array<KClass<*>> = []
 )

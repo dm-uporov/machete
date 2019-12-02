@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  *
  * @param dependencies зависимости скоупа Application, к классам которых нет непосредственного
  * доступа (например, Context). Такие зависимости необходимо будет зарезолвить при инициализации Machete.
- * Для всех остальных зависимостей стоит использовать @ApplicationScope для автоматического резолва.
+ * Также в этот массив автоматом попадают классы, аннотированные @ApplicationScope.
  *
  */
 @Retention(AnnotationRetention.SOURCE)

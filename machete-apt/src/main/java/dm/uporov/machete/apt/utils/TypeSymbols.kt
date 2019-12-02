@@ -66,6 +66,7 @@ fun Symbol.TypeSymbol.asModule(): Module {
 
     var modulesParam: List<Attribute.Class>? = null
     var dependenciesParam: List<Attribute.Class>? = null
+    var provideParam: List<Attribute.Class>? = null
 
     annotationMirror.values.forEach {
         val name = it.fst.simpleName.toString()
@@ -73,12 +74,14 @@ fun Symbol.TypeSymbol.asModule(): Module {
         when (name) {
             "modules" -> modulesParam = value as? List<Attribute.Class>
             "dependencies" -> dependenciesParam = value as? List<Attribute.Class>
+            "provide" -> provideParam = value as? List<Attribute.Class>
         }
     }
 
     return Module(
         coreClass = this,
         modules = modulesParam.toTypeSymbols().map { it.asModule() }.toSet(),
+        provide = provideParam.toTypeSymbols().toList(),
         dependencies = dependenciesParam.toTypeSymbols().toList()
     )
 }

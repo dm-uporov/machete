@@ -2,8 +2,7 @@ package dm.uporov.app.generated
 
 import android.content.Context
 import dm.uporov.analytics.Analytics
-import dm.uporov.analytics.generated.CoreAnalyticsComponentDefinition
-import dm.uporov.analytics.generated.CoreAnalyticsComponentDependencies
+import dm.uporov.analytics.generated.CoreAnalyticsModuleDefinition
 import dm.uporov.app.App
 import dm.uporov.list.ListActivity
 import dm.uporov.machete.exception.MacheteIsNotInitializedException
@@ -48,31 +47,35 @@ fun App.injectAnalytics(): Lazy<Analytics> = lazy {
         .invoke(this)
 }
 
-class AppComponent private constructor(
-    val analyticsProvider: Provider<App, Analytics>,
+class AppComponentDefinition private constructor(
     val contextProvider: Provider<App, Context>,
     val appFromListActivityProvider: Provider<ListActivity, App>
 ) {
     companion object {
-        fun App.appComponent(
-            coreAnalyticsComponentDefinition: CoreAnalyticsComponentDefinition,
+        fun appComponentDefinition(
             contextProvider: Provider<App, Context>,
             appFromListActivityProvider: Provider<ListActivity, App>
-        ) = AppComponent(
-            analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider.mapOwner(just { Resolver(it) }),
+        ) = AppComponentDefinition(
             contextProvider = contextProvider,
             appFromListActivityProvider = appFromListActivityProvider
         )
     }
 }
 
-class Resolver(private val app: App) : CoreAnalyticsComponentDependencies {
-    override fun getContext(): Context {
-        return app.getContext()
+class AppComponent private constructor(
+    val analyticsProvider: Provider<App, Analytics>,
+    val contextProvider: Provider<App, Context>,
+    val appFromListActivityProvider: Provider<ListActivity, App>
+) {
+    companion object {
+        fun Machete.appComponent(
+            appComponentDefinition: AppComponentDefinition,
+            coreAnalyticsComponentDefinition: CoreAnalyticsModuleDefinition
+        ) = AppComponent(
+            analyticsProvider = coreAnalyticsComponentDefinition.analyticsProvider
+                .mapOwner(just { CoreAnalyticsModuleResolver(it) }),
+            contextProvider = appComponentDefinition.contextProvider,
+            appFromListActivityProvider = appComponentDefinition.appFromListActivityProvider
+        )
     }
-
-    override fun getAnalytics(): Analytics {
-        return app.getAnalytics()
-    }
-
 }
