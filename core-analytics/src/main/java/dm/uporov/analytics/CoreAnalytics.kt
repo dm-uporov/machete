@@ -1,7 +1,7 @@
 package dm.uporov.analytics
 
 import android.content.Context
-import dm.uporov.analytics.CoreAnalytics_ModuleDefinition.Companion.coreAnalytics_ModuleDefinition
+import dm.uporov.analytics.CoreAnalyticsModuleDefinition.Companion.coreAnalyticsModuleDefinition
 import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 
@@ -11,6 +11,6 @@ import dm.uporov.machete.provider.single
 )
 object CoreAnalytics
 
-val coreAnalyticsModuleDefinition = coreAnalytics_ModuleDefinition(
+val coreAnalyticsModuleDefinition = coreAnalyticsModuleDefinition(
     single { AnalyticsImpl(it.getContext()) }
 )

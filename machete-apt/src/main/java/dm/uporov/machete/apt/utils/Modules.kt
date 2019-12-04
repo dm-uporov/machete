@@ -18,7 +18,8 @@ fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>) = 
 
 private fun Symbol.TypeSymbol.asModule(
     internalDependencies: List<Symbol.TypeSymbol>,
-    recursive: Boolean
+    recursive: Boolean,
+    deepRecursive: Boolean = false
 ): Module {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == MacheteModule::class.qualifiedName
@@ -42,7 +43,13 @@ private fun Symbol.TypeSymbol.asModule(
     }
 
     val modules = if (recursive) {
-        modulesParam.toTypeSymbols().map { it.asModule(emptyList()) }.toSet()
+        modulesParam.toTypeSymbols().map {
+            it.asModule(
+                internalDependencies = emptyList(),
+                recursive = deepRecursive,
+                deepRecursive = deepRecursive
+            )
+        }.toSet()
     } else {
         emptySet()
     }

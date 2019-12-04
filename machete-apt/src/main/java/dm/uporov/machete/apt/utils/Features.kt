@@ -9,9 +9,11 @@ import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
 fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) =
-    asFeatureRecursive(
+    asFeature(
         featureAnnotation = MacheteApplication::class,
-        internalDependencies = internalDependencies
+        internalDependencies = internalDependencies,
+        recursive = true,
+        deepRecursive = true
     ).let {
         it.copy(
             dependencies = emptyList(),
@@ -19,33 +21,17 @@ fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.Typ
         )
     }
 
-fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeatureRecursive(
-    featureAnnotation = MacheteFeature::class,
-    internalDependencies = internalDependencies
-)
-
-private fun Symbol.TypeSymbol.asFeatureRecursive(
-    featureAnnotation: KClass<*>,
-    internalDependencies: List<Symbol.TypeSymbol>
-) = asFeature(
-    featureAnnotation = featureAnnotation,
-    internalDependencies = internalDependencies,
-    recursive = true
-)
-
-private fun Symbol.TypeSymbol.asFeature(
-    featureAnnotation: KClass<*>,
-    internalDependencies: List<Symbol.TypeSymbol>
-) = asFeature(
-    featureAnnotation = featureAnnotation,
-    internalDependencies = internalDependencies,
-    recursive = false
-)
+fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
+        featureAnnotation = MacheteFeature::class,
+        internalDependencies = internalDependencies,
+        recursive = true
+    )
 
 private fun Symbol.TypeSymbol.asFeature(
     featureAnnotation: KClass<*>,
     internalDependencies: List<Symbol.TypeSymbol>,
-    recursive: Boolean
+    recursive: Boolean,
+    deepRecursive: Boolean = false
 ): Feature {
     val annotationMirror = annotationMirrors.find {
         it.type.asElement().qualifiedName.toString() == featureAnnotation.qualifiedName
@@ -69,7 +55,14 @@ private fun Symbol.TypeSymbol.asFeature(
     }
 
     val features = if (recursive) {
-        featuresParam.toTypeSymbols().map { it.asFeature(MacheteFeature::class, emptyList()) }
+        featuresParam.toTypeSymbols().map {
+            it.asFeature(
+                featureAnnotation = MacheteFeature::class,
+                internalDependencies = emptyList(),
+                recursive = deepRecursive,
+                deepRecursive = deepRecursive
+            )
+        }
             .toSet()
     } else {
         emptySet()

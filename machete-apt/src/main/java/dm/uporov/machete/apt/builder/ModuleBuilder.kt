@@ -24,7 +24,6 @@ internal class ModuleBuilder(
 
     fun build(): FileSpec {
         return FileSpec.builder(coreClassPackage, coreClassSimpleName.asModuleClassName())
-            .addImport("dm.uporov.machete.provider", "single", "factory")
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withModuleDependenciesInterface()
             .withDefinitionField()
@@ -65,7 +64,7 @@ internal class ModuleBuilder(
                 .build()
         )
         addFunction(
-            FunSpec.builder("set$moduleDefinitionName")
+            FunSpec.builder(moduleDefinitionName.asSetterName())
                 .addParameter("instance", moduleDefinitionClassName)
                 .addStatement("definition = instance")
                 .build()

@@ -6,6 +6,7 @@ import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.annotation.ApplicationScope
 import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.apt.builder.FeatureComponentBuilder
+import dm.uporov.machete.apt.builder.MacheteBuilder
 import dm.uporov.machete.apt.utils.asApplicationFeature
 import java.io.File
 import javax.annotation.processing.*
@@ -50,6 +51,7 @@ class MacheteApplicationProcessor : AbstractProcessor() {
             buildDefinition().write()
             buildComponent().write()
         }
+        MacheteBuilder(appFeature).buildMachete().write()
         return true
     }
 
