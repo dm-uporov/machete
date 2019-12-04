@@ -9,5 +9,8 @@ data class Feature(
     val dependencies: List<Symbol.TypeSymbol>,
     val internalDependencies: List<Symbol.TypeSymbol>
 ) {
-    val scopeDependencies = (dependencies + internalDependencies).distinct()
+    val scopeDependencies = dependencies
+        .plus(internalDependencies)
+        .plus(modules.map { it.provideDependencies }.flatten())
+        .distinct()
 }

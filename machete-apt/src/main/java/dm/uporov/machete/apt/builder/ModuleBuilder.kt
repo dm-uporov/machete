@@ -7,20 +7,6 @@ import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.Provider
 
-private const val MODULE_CLASS_NAME_FORMAT = "%s_Module"
-private const val MODULE_DEPENDENCIES_CLASS_NAME_FORMAT = "%s_ModuleDependencies"
-private const val MODULE_DEFINITION_CLASS_NAME_FORMAT = "%s_ModuleDefinition"
-private const val GETTER_NAME_FORMAT = "get%s"
-
-private fun String.asModuleClassName() = MODULE_CLASS_NAME_FORMAT.format(this)
-private fun String.asModuleDependenciesClassName() =
-    MODULE_DEPENDENCIES_CLASS_NAME_FORMAT.format(this)
-
-private fun String.asModuleDefinitionClassName() =
-    MODULE_DEFINITION_CLASS_NAME_FORMAT.format(this)
-
-private fun String.asGetterName() = GETTER_NAME_FORMAT.format(this)
-
 internal class ModuleBuilder(
     private val module: Module
 ) {

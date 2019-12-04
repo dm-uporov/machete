@@ -6,7 +6,8 @@ import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 
 @MacheteModule(
-    dependencies = [Context::class]
+    dependencies = [Context::class],
+    provide = [Analytics::class]
 )
 object CoreAnalytics
 

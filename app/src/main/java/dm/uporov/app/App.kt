@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
+import dm.uporov.app.App_ComponentDefinition.Companion.app_ComponentDefinition
 import dm.uporov.app.generated.AppComponentDefinition.Companion.appComponentDefinition
 import dm.uporov.app.generated.Machete.startMachete
 import dm.uporov.app.generated.injectAnalytics
@@ -29,7 +30,7 @@ class App : Application() {
 
     private fun initDi() {
         startMachete(
-            appComponentDefinition(
+            app_ComponentDefinition(
                 contextProvider = just { this },
                 appFromListActivityProvider = just { this }
             ),

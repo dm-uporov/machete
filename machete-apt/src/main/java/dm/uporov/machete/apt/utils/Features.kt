@@ -69,7 +69,8 @@ private fun Symbol.TypeSymbol.asFeature(
     }
 
     val features = if (recursive) {
-        featuresParam.toTypeSymbols().map { it.asFeature(featureAnnotation, emptyList()) }.toSet()
+        featuresParam.toTypeSymbols().map { it.asFeature(MacheteFeature::class, emptyList()) }
+            .toSet()
     } else {
         emptySet()
     }
