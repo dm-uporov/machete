@@ -2,6 +2,7 @@ package dm.uporov.app
 
 import android.app.Application
 import android.content.Context
+import com.example.core_analytics_api.Event
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
@@ -22,7 +23,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         initDi()
-        analytics.sendEvent("Machete works!")
+        analytics.sendEvent(Event("Machete works!"))
     }
 
     private fun initDi() {

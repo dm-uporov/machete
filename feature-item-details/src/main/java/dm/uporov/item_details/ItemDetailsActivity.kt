@@ -2,7 +2,8 @@ package dm.uporov.item_details
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import dm.uporov.analytics.Analytics
+import com.example.core_analytics_api.Analytics
+import com.example.core_analytics_api.Event
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
@@ -14,6 +15,6 @@ class ItemDetailsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        analytics.sendEvent("Item details are showed")
+        analytics.sendEvent(Event("Item details are showed"))
     }
 }

@@ -1,6 +1,7 @@
 package dm.uporov.list
 
-import dm.uporov.analytics.Analytics
+import com.example.core_analytics_api.Analytics
+import com.example.core_analytics_api.Event
 import dm.uporov.machete.annotation.FeatureScope
 
 interface ListView {
@@ -20,7 +21,7 @@ class ListPresenterImpl(
 ): ListPresenter {
 
     override fun start() {
-        analytics.sendEvent("ListPresenterImpl is started")
+        analytics.sendEvent(Event("ListPresenterImpl is started"))
         view.showItems(emptyList())
     }
 }

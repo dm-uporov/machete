@@ -1,7 +1,9 @@
 package dm.uporov.analytics
 
 import android.content.Context
+import com.example.core_analytics_api.Analytics
 import dm.uporov.analytics.CoreAnalyticsModuleDefinition.Companion.coreAnalyticsModuleDefinition
+import dm.uporov.core_analytics_impl.AnalyticsImpl
 import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 

@@ -2,7 +2,8 @@ package dm.uporov.list
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import dm.uporov.analytics.Analytics
+import com.example.core_analytics_api.Analytics
+import com.example.core_analytics_api.Event
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
@@ -19,7 +20,7 @@ class ListActivity : AppCompatActivity(), ListView {
     }
 
     override fun showItems(items: List<String>) {
-        analytics.sendEvent("Items are showed")
+        analytics.sendEvent(Event("Items are showed"))
     }
 
 }
