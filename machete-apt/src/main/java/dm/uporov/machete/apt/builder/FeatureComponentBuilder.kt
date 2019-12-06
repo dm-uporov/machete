@@ -229,18 +229,23 @@ internal class FeatureComponentBuilder(
                             """.trimIndent()
                             )
                             feature.features.forEach {
-                                val featureComponentName =
-                                    it.coreClass.toClassName().simpleName.asComponentClassName()
-                                TODO инициализация и сэттинг дочерних компонентов
-                                """
-                                    ${featureComponentName.asSetterName()}(
-                                        ${featureComponentName.decapitalize()}(
-                                            definition.
+                                val featureClass = it.coreClass.toClassName()
+                                val featureName = featureClass.simpleName
+                                val featureComponentName = featureName.asComponentClassName()
+                                val featurePackage = featureClass.packageName
+                                addStatement(
+                                    """
+                                    $featurePackage.${featureComponentName.asSetterName()}(
+                                        $featurePackage.$featureComponentName.Companion.${featureComponentName.decapitalize()}(
+                                            definition.${featureName.asComponentDefinitionClassName().decapitalize()},
+                                            ${featureName.asComponentDependenciesClassName().asResolverClassName()}(
+                                                ${componentName.decapitalize()}
+                                            )
                                         )
                                     )
                                 """.trimIndent()
+                                )
                             }
-                            addStatement("// TODO init and set features components")
                             addStatement("return ${componentName.decapitalize()}")
                         }
                         .build()
@@ -272,18 +277,19 @@ internal class FeatureComponentBuilder(
                             .build()
                     )
                     .apply {
-                        it.dependencies.forEach { dependency ->
-                            val type = dependency.asType().asTypeName()
-                            val dependencyUniqueName = type.flatGenerics()
-                            val getterName = dependencyUniqueName.asGetterName()
-                            addFunction(
-                                FunSpec.builder(getterName)
-                                    .addModifiers(KModifier.OVERRIDE)
-                                    .returns(type)
-                                    .addStatement(" return $coreClassParameter.$getterName()")
-                                    .build()
-                            )
-                        }
+                        (it.dependencies + it.provideDependencies)
+                            .forEach { dependency ->
+                                val type = dependency.asType().asTypeName()
+                                val dependencyUniqueName = type.flatGenerics()
+                                val getterName = dependencyUniqueName.asGetterName()
+                                addFunction(
+                                    FunSpec.builder(getterName)
+                                        .addModifiers(KModifier.OVERRIDE)
+                                        .returns(type)
+                                        .addStatement(" return $coreClassParameter.$getterName()")
+                                        .build()
+                                )
+                            }
                     }
                     .build()
             )

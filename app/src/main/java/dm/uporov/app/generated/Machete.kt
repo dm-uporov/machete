@@ -1,13 +1,15 @@
 package dm.uporov.app.generated
 
 import dm.uporov.app.AppComponentDefinition
-import dm.uporov.app.generated.AppComponent.Companion.appComponent
+import dm.uporov.app.AppComponent.Companion.appComponent
+import dm.uporov.app.AppComponentDependencies
 
 object Machete {
 
     fun startMachete(appComponentDefinition: AppComponentDefinition) {
-        setAppComponent(appComponent(
-            appComponentDefinition
+        dm.uporov.app.setAppComponent(appComponent(
+            appComponentDefinition,
+            object : AppComponentDependencies {}
         ))
     }
 }

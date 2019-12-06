@@ -26,8 +26,6 @@ internal class ModuleBuilder(
         return FileSpec.builder(coreClassPackage, coreClassSimpleName.asModuleClassName())
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withModuleDependenciesInterface()
-            .withDefinitionField()
-            .withGetFunctions()
             .withModuleDefinition()
             .build()
     }
@@ -41,54 +39,14 @@ internal class ModuleBuilder(
     }
 
     private fun TypeSpec.Builder.withDependenciesGetters() = apply {
-        module.dependencies.forEach {
-            val type = it.asType().asTypeName()
-            val uniqueName = type.flatGenerics()
-            addFunction(
-                FunSpec.builder(uniqueName.asGetterName())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .returns(type)
-                    .build()
-            )
-        }
-    }
-
-    private fun FileSpec.Builder.withDefinitionField() = apply {
-        addProperty(
-            PropertySpec.builder(
-                "definition",
-                moduleDefinitionClassName,
-                KModifier.PRIVATE, KModifier.LATEINIT
-            )
-                .mutable(true)
-                .build()
-        )
-        addFunction(
-            FunSpec.builder(moduleDefinitionName.asSetterName())
-                .addParameter("instance", moduleDefinitionClassName)
-                .addStatement("definition = instance")
-                .build()
-        )
-        addFunction(
-            FunSpec.builder("getDefinition")
-                .addModifiers(KModifier.PRIVATE)
-                .returns(moduleDefinitionClassName)
-                .addStatement("if (!::definition.isInitialized) throw MacheteIsNotInitializedException()")
-                .addStatement(" return definition")
-                .build()
-        )
-    }
-
-    private fun FileSpec.Builder.withGetFunctions() = apply {
-        module.scopeDependencies
+        (module.dependencies + module.provideDependencies)
             .forEach {
-                val dependencyType = it.asType().asTypeName()
-                val uniqueName = dependencyType.flatGenerics()
+                val type = it.asType().asTypeName()
+                val uniqueName = type.flatGenerics()
                 addFunction(
-                    FunSpec.builder("get${uniqueName.capitalize()}")
-                        .receiver(moduleDependenciesClassName)
-                        .returns(dependencyType)
-                        .addStatement(" return getDefinition().${uniqueName.asProviderName()}.invoke(this)")
+                    FunSpec.builder(uniqueName.asGetterName())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .returns(type)
                         .build()
                 )
             }
