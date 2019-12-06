@@ -5,7 +5,6 @@ import android.content.Context
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
-import dm.uporov.app.generated.Machete.startMachete
 import dm.uporov.list.ListActivity
 import dm.uporov.list.listActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
@@ -27,7 +26,7 @@ class App : Application() {
     }
 
     private fun initDi() {
-        startMachete(
+        Machete.startMachete(
             appComponentDefinition(
                 contextProvider = just { this },
                 appFromListActivityProvider = just { this },

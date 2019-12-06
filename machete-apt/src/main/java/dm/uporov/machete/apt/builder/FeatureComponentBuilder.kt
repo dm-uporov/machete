@@ -236,7 +236,7 @@ internal class FeatureComponentBuilder(
                                 addStatement(
                                     """
                                     $featurePackage.${featureComponentName.asSetterName()}(
-                                        $featurePackage.$featureComponentName.Companion.${featureComponentName.decapitalize()}(
+                                        $featurePackage.$featureComponentName.${featureComponentName.decapitalize()}(
                                             definition.${featureName.asComponentDefinitionClassName().decapitalize()},
                                             ${featureName.asComponentDependenciesClassName().asResolverClassName()}(
                                                 ${componentName.decapitalize()}
