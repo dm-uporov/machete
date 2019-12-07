@@ -9,7 +9,7 @@ android {
 
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 14
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -31,11 +31,10 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.core:core-ktx:1.1.0'
 
-    implementation project(':core-analytics-api')
-    implementation project(':repository-items')
+    api project(":repository-items-api")
+    implementation project(":repository-items-impl")
 
     implementation project(':machete')
     kapt project(':machete-apt')

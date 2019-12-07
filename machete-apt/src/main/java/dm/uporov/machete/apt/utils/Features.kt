@@ -13,7 +13,7 @@ fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.Typ
         featureAnnotation = MacheteApplication::class,
         internalDependencies = internalDependencies,
         recursive = true,
-        deepRecursive = true
+        deepRecursive = false
     ).let {
         it.copy(
             dependencies = emptyList(),

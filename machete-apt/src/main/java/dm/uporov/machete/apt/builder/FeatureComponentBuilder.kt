@@ -77,10 +77,15 @@ internal class FeatureComponentBuilder(
     }
 
     private fun FileSpec.Builder.withDefinition() = apply {
-        val properties = feature.internalDependencies.map(::dependencyProvider)
-            .plus(feature.features.map(::featureFromChildProvider))
-            .plus(feature.features.map(::featureDefinition))
-            .plus(feature.modules.map(::moduleDefinition))
+        val properties = feature.internalDependencies
+            .asSequence()
+            .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+            .distinct()
+            .map(::dependencyProvider)
+            .plus(feature.features.asSequence().map(::featureFromChildProvider))
+            .plus(feature.features.asSequence().map(::featureDefinition))
+            .plus(feature.modules.asSequence().map(::moduleDefinition))
+            .toList()
 
         addType(
             TypeSpec.classBuilder(componentDefinitionClassName)
@@ -200,28 +205,40 @@ internal class FeatureComponentBuilder(
                                 """
                             val ${componentName.decapitalize()} = $componentName(
                             ${feature.internalDependencies
+                                    .asSequence()
+                                    .plus(
+                                        feature.modules
+                                            .asSequence()
+                                            .map(Module::dependencies)
+                                            .flatten()
+                                    )
+                                    .distinct()
                                     .map {
                                         val providerName = it.providerName()
-                                        "$providerName = definition.$providerName"
+                                        "\n$providerName = definition.$providerName"
                                     }
-                                    .plus(feature.features.map(::featureFromChildProvider).map {
-                                        val name = it.first
-                                        "$name = definition.$name"
-                                    })
-                                    .plus(feature.dependencies.map {
+                                    .plus(feature.features
+                                        .asSequence()
+                                        .map(::featureFromChildProvider)
+                                        .map {
+                                            val name = it.first
+                                            "\n$name = definition.$name"
+                                        })
+                                    .plus(feature.dependencies.asSequence().map {
                                         val providerName = it.providerName()
-                                        "$providerName = dependencies.$providerName"
+                                        "\n$providerName = dependencies.$providerName"
                                     })
-                                    .plus(modulesWithDefinitionsNames.map { (module, name) ->
+                                    .plus(modulesWithDefinitionsNames.asSequence().map { (module, name) ->
                                         module.provideDependencies.map { dependency ->
                                             val providerName = dependency.providerName()
-                                            "$providerName = definition.${name.decapitalize()}.$providerName.mapOwner(just { ${
+                                            "\n$providerName = definition.${name.decapitalize()}.$providerName.mapOwner(just { ${
                                             module.coreClass
-                                                .toClassName()
-                                                .simpleName
+                                                .asType()
+                                                .asTypeName()
+                                                .flatGenerics()
                                                 .asModuleDependenciesClassName()
                                                 .asResolverClassName()
-                                            }(it) })"
+                                            }(definition, it) })"
                                         }.joinToString()
                                     })
                                     .joinToString()}
@@ -255,6 +272,7 @@ internal class FeatureComponentBuilder(
     }
 
     private fun TypeSpec.Builder.withResolvers() = apply {
+
         feature.modules.forEach {
             val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
             val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
@@ -268,25 +286,63 @@ internal class FeatureComponentBuilder(
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
+                            .addParameter("definition", componentDefinitionClassName)
                             .addParameter(coreClassParameter, coreClassName)
                             .build()
                     )
                     .addProperty(
-                        PropertySpec.builder(coreClassParameter, coreClassName)
+                        PropertySpec.builder(
+                            "definition",
+                            componentDefinitionClassName,
+                            KModifier.PRIVATE
+                        )
+                            .initializer("definition")
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder(
+                            coreClassParameter,
+                            coreClassName,
+                            KModifier.PRIVATE
+                        )
                             .initializer(coreClassParameter)
                             .build()
                     )
                     .apply {
-                        (it.dependencies + it.provideDependencies)
+                        it.dependencies
                             .forEach { dependency ->
                                 val type = dependency.asType().asTypeName()
                                 val dependencyUniqueName = type.flatGenerics()
                                 val getterName = dependencyUniqueName.asGetterName()
+                                val providerName = dependencyUniqueName.asProviderName()
                                 addFunction(
                                     FunSpec.builder(getterName)
                                         .addModifiers(KModifier.OVERRIDE)
                                         .returns(type)
-                                        .addStatement(" return $coreClassParameter.$getterName()")
+                                        .addStatement(" return definition.$providerName.invoke($coreClassParameter)")
+                                        .build()
+                                )
+                            }
+                        it.provideDependencies
+                            .forEach { dependency ->
+                                val type = dependency.asType().asTypeName()
+                                val dependencyUniqueName = type.flatGenerics()
+                                val getterName = dependencyUniqueName.asGetterName()
+                                val providerName = dependencyUniqueName.asProviderName()
+                                val moduleDefinitionName = it.coreClass.toClassName()
+                                    .simpleName.asModuleDefinitionClassName().decapitalize()
+                                addFunction(
+                                    FunSpec.builder(getterName)
+                                        .addModifiers(KModifier.OVERRIDE)
+                                        .returns(type)
+                                        .addStatement(
+                                            """
+                                            return definition
+                                            .$moduleDefinitionName
+                                            .$providerName
+                                            .invoke(this)
+                                        """.trimIndent()
+                                        )
                                         .build()
                                 )
                             }
@@ -298,7 +354,6 @@ internal class FeatureComponentBuilder(
             val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
             val dependenciesClassName = uniqueName.asComponentDependenciesClassName()
             val resolverClassName = dependenciesClassName.asResolverClassName()
-
             val componentParameter = componentName.decapitalize()
 
             addType(

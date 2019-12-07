@@ -6,14 +6,14 @@ import com.example.core_analytics_api.Event
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
-import dm.uporov.list.ListActivity
-import dm.uporov.list.listActivityComponentDefinition
+import dm.uporov.list.ListFragment
+import dm.uporov.list.listFragmentComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.provider.just
 
 @MacheteApplication(
     modules = [CoreAnalytics::class],
-    features = [ListActivity::class],
+    features = [ListFragment::class],
     dependencies = [Context::class]
 )
 class App : Application() {
@@ -30,8 +30,8 @@ class App : Application() {
         Machete.startMachete(
             appComponentDefinition(
                 contextProvider = just { this },
-                appFromListActivityProvider = just { this },
-                listActivityComponentDefinition = listActivityComponentDefinition,
+                appFromListFragmentProvider = just { this },
+                listFragmentComponentDefinition = listFragmentComponentDefinition,
                 coreAnalyticsModuleDefinition = coreAnalyticsModuleDefinition
             )
         )

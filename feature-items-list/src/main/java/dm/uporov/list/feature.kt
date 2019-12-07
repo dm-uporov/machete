@@ -1,8 +1,13 @@
 package dm.uporov.list
 
-import dm.uporov.list.ListActivityComponentDefinition.Companion.listActivityComponentDefinition
+import dm.uporov.list.ListFragmentComponentDefinition.Companion.listFragmentComponentDefinition
+import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.single
+import dm.uporov.repository_items.itemsRepositoryModule
 
-val listActivityComponentDefinition = listActivityComponentDefinition(
-    single { ListPresenterImpl(it, it.getAnalytics()) }
+val listFragmentComponentDefinition = listFragmentComponentDefinition(
+    single { ItemsAdapter() },
+    single { ListPresenterImpl(it, it.getAnalytics(), it.getItemsRepository()) },
+    just { it.activity!! },
+    itemsRepositoryModule
 )
