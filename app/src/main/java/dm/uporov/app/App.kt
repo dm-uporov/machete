@@ -6,6 +6,8 @@ import com.example.core_analytics_api.Event
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
+import dm.uporov.feature_favorites.FavoritesActivity
+import dm.uporov.feature_favorites.favoritesActivityComponentDefinition
 import dm.uporov.feature_home.HomeActivity
 import dm.uporov.feature_home.homeActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
@@ -13,7 +15,7 @@ import dm.uporov.machete.provider.just
 
 @MacheteApplication(
     modules = [CoreAnalytics::class],
-    features = [HomeActivity::class],
+    features = [HomeActivity::class, FavoritesActivity::class],
     dependencies = [Context::class]
 )
 class App : Application() {
@@ -31,7 +33,9 @@ class App : Application() {
             appComponentDefinition(
                 contextProvider = just { this },
                 appFromHomeActivityProvider = just { this },
+                appFromFavoritesActivityProvider = just { this },
                 homeActivityComponentDefinition = homeActivityComponentDefinition,
+                favoritesActivityComponentDefinition = favoritesActivityComponentDefinition,
                 coreAnalyticsModuleDefinition = coreAnalyticsModuleDefinition
             )
         )

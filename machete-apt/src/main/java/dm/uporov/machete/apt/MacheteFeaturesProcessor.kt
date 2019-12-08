@@ -2,7 +2,13 @@ package dm.uporov.machete.apt
 
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
+import com.sun.source.util.Trees
 import com.sun.tools.javac.code.Symbol
+import com.sun.tools.javac.processing.JavacProcessingEnvironment
+import com.sun.tools.javac.tree.JCTree.JCClassDecl
+import com.sun.tools.javac.tree.JCTree.JCExpression
+import com.sun.tools.javac.tree.TreeMaker
+import com.sun.tools.javac.util.Names
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.apt.builder.FeatureComponentBuilder
@@ -13,6 +19,7 @@ import java.io.File
 import javax.annotation.processing.*
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.TypeElement
+
 
 @AutoService(Processor::class) // For registering the service
 @SupportedSourceVersion(SourceVersion.RELEASE_8) // to support Java 8
@@ -53,6 +60,17 @@ class MacheteFeaturesProcessor : AbstractProcessor() {
                 it.buildDefinition().write()
                 it.buildComponent().write()
             }
+
+        val trees = Trees.instance(processingEnv)
+        val filer = processingEnv.filer
+
+        val context = (processingEnv as JavacProcessingEnvironment).context
+        val treeMaker = TreeMaker.instance(context)
+        val names = Names.instance(context)
+
+        val selector: JCExpression = treeMaker.Ident(names.fromString(javaFile.packageName))
+        selector = mTreeMaker.Select(selector, mNames.fromString(typeSpec.name))
+        (mTrees.getTree(mOriginElement) as JCClassDecl).extending = selector
 
         return true
     }

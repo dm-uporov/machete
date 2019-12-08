@@ -1,4 +1,4 @@
-package dm.uporov.feature_home
+package dm.uporov.feature_favorites
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -10,16 +10,12 @@ import dm.uporov.machete.annotation.MacheteFeature
     dependencies = [Analytics::class],
     features = [ListFragment::class]
 )
-class HomeActivity : AppCompatActivity() {
+class FavoritesActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ListFragment::class.java.newInstance()
-            .also(::inflateListFragment)
-            .run {
-                supportFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, this)
-                    .commit()
-            }
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, ListFragment::class.java.newInstance())
+            .commit()
     }
 }
