@@ -2,6 +2,9 @@ package dm.uporov.machete.apt
 
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.TypeSpec
 import com.sun.source.util.Trees
 import com.sun.tools.javac.code.Symbol
 import com.sun.tools.javac.processing.JavacProcessingEnvironment
@@ -53,24 +56,38 @@ class MacheteFeaturesProcessor : AbstractProcessor() {
         roundEnvironment.getElementsAnnotatedWith(MacheteFeature::class.java)
             .asSequence()
             .filterIsInstance<Symbol.TypeSymbol>()
-            .map { it.asFeature(scopeDependencies[it] ?: emptyList()) }
-            .map(::FeatureComponentBuilder)
             .forEach {
-                it.buildDependencies().write()
-                it.buildDefinition().write()
-                it.buildComponent().write()
+                val feature = it.asFeature(scopeDependencies[it] ?: emptyList())
+                val builder = FeatureComponentBuilder(feature)
+
+                builder.buildDependencies().write()
+                builder.buildDefinition().write()
+                builder.buildComponent().write()
+
+
+                val typeSpec = TypeSpec.classBuilder("Middle")
+                    .addModifiers(KModifier.OPEN)
+                    .addFunction(FunSpec.builder("someFun").build())
+                    .build()
+                val file =
+                    FileSpec.builder(it.enclosingElement.toString(), typeSpec.name.toString())
+                        .addType(typeSpec)
+                        .build()
+
+                val trees = Trees.instance(processingEnv)
+                val filer = processingEnv.filer
+
+                file.write()
+
+                val context = (processingEnv as JavacProcessingEnvironment).context
+                val treeMaker = TreeMaker.instance(context)
+                val names = Names.instance(context)
+
+                var selector: JCExpression = treeMaker.Ident(names.fromString(file.packageName))
+                selector = treeMaker.Select(selector, names.fromString(typeSpec.name)) as JCExpression
+                (trees.getTree(it) as JCClassDecl).extending = selector
             }
 
-        val trees = Trees.instance(processingEnv)
-        val filer = processingEnv.filer
-
-        val context = (processingEnv as JavacProcessingEnvironment).context
-        val treeMaker = TreeMaker.instance(context)
-        val names = Names.instance(context)
-
-        val selector: JCExpression = treeMaker.Ident(names.fromString(javaFile.packageName))
-        selector = mTreeMaker.Select(selector, mNames.fromString(typeSpec.name))
-        (mTrees.getTree(mOriginElement) as JCClassDecl).extending = selector
 
         return true
     }
