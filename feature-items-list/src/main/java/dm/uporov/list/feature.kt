@@ -6,8 +6,8 @@ import dm.uporov.machete.provider.single
 import dm.uporov.repository_items.itemsRepositoryModule
 
 val listFragmentComponentDefinition = listFragmentComponentDefinition(
-    single { ItemsAdapter() },
-    single { ListPresenterImpl(it, it.getAnalytics(), it.getItemsRepository()) },
-    just { it.activity!! },
-    itemsRepositoryModule
+    itemsAdapterProvider = single { ItemsAdapter() },
+    listPresenterProvider = single { ListPresenterImpl(it, it.getAnalytics(), it.getItemsRepository()) },
+    contextProvider = just { it.activity!! },
+    itemsRepositoryCoreModuleDefinition = itemsRepositoryModule
 )

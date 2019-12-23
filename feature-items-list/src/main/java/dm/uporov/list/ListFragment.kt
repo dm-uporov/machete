@@ -23,8 +23,6 @@ class ListFragment : Fragment(), ListView {
     private val analytics by injectAnalytics()
     private val adapter by injectItemsAdapter()
 
-    lateinit var component: ListFragmentComponent
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

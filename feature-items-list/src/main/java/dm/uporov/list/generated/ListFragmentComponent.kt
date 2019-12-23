@@ -3,51 +3,64 @@ package dm.uporov.list.generated
 import android.content.Context
 import com.example.core_analytics_api.Analytics
 import dm.uporov.list.*
+import dm.uporov.machete.exception.MacheteIsNotInitializedException
+import dm.uporov.machete.exception.SubFeatureIsNotInitializedException
 import dm.uporov.machete.provider.Provider
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.mapOwner
 import dm.uporov.repository_items.ItemsRepositoryCoreModuleDependencies
 import dm.uporov.repository_items_api.ItemsRepository
+import java.util.*
+import kotlin.Lazy
 
+private val componentsMap = WeakHashMap<ListFragment, ListFragmentComponent>()
+
+fun setListFragmentComponent(owner: ListFragment, component: ListFragmentComponent) {
+    componentsMap[owner] = component
+}
+
+private fun ListFragment.getComponent(): ListFragmentComponent {
+    return componentsMap[this] ?: throw SubFeatureIsNotInitializedException(this::class)
+}
 
 fun ListFragment.getAnalytics(): Analytics {
-    return component.analyticsProvider.invoke(this)
+    return getComponent().analyticsProvider.invoke(this)
 }
 
 fun ListFragment.getItemsAdapter(): ItemsAdapter {
-    return component.itemsAdapterProvider.invoke(this)
+    return getComponent().itemsAdapterProvider.invoke(this)
 }
 
 fun ListFragment.getListPresenter(): ListPresenter {
-    return component.listPresenterProvider.invoke(this)
+    return getComponent().listPresenterProvider.invoke(this)
 }
 
 fun ListFragment.getItemsRepository(): ItemsRepository {
-    return component.itemsRepositoryProvider.invoke(this)
+    return getComponent().itemsRepositoryProvider.invoke(this)
 }
 
 fun ListFragment.getContext(): Context {
-    return component.contextProvider.invoke(this)
+    return getComponent().contextProvider.invoke(this)
 }
 
 fun ListFragment.injectAnalytics(): Lazy<Analytics> {
-    return lazy { component.analyticsProvider.invoke(this) }
+    return lazy { getComponent().analyticsProvider.invoke(this) }
 }
 
 fun ListFragment.injectItemsAdapter(): Lazy<ItemsAdapter> {
-    return lazy { component.itemsAdapterProvider.invoke(this) }
+    return lazy { getComponent().itemsAdapterProvider.invoke(this) }
 }
 
 fun ListFragment.injectListPresenter(): Lazy<ListPresenter> {
-    return lazy { component.listPresenterProvider.invoke(this) }
+    return lazy { getComponent().listPresenterProvider.invoke(this) }
 }
 
 fun ListFragment.injectItemsRepository(): Lazy<ItemsRepository> {
-    return lazy { component.itemsRepositoryProvider.invoke(this) }
+    return lazy { getComponent().itemsRepositoryProvider.invoke(this) }
 }
 
 fun ListFragment.injectContext(): Lazy<Context> {
-    return lazy { component.contextProvider.invoke(this) }
+    return lazy { getComponent().contextProvider.invoke(this) }
 }
 
 class ListFragmentComponent private constructor(
@@ -62,7 +75,7 @@ class ListFragmentComponent private constructor(
             definition: ListFragmentComponentDefinition, dependencies:
             ListFragmentComponentDependencies
         ): ListFragmentComponent {
-            return ListFragmentComponent(
+            val listFragmentComponent = ListFragmentComponent(
 
                 itemsAdapterProvider = definition.itemsAdapterProvider,
                 listPresenterProvider = definition.listPresenterProvider,
@@ -72,6 +85,7 @@ class ListFragmentComponent private constructor(
                 definition.itemsRepositoryCoreModuleDefinition.itemsRepositoryProvider.mapOwner(just
                 { ItemsRepositoryCoreModuleDependenciesResolver(definition, it) })
             )
+            return listFragmentComponent
         }
     }
 

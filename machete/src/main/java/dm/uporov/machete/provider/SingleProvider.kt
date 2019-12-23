@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import dm.uporov.machete.Destroyable
 import dm.uporov.machete.OnDestroyObserver
+import java.util.*
 
 // Provider for scope single dependency
 fun <O : Any, T> single(provide: (O) -> T) = SingleProvider(provide)
@@ -14,9 +15,11 @@ class SingleProvider<O, T> internal constructor(
     private val provider: (O) -> T
 ) : Provider<O, T> {
 
+    private val weakHashMap = WeakHashMap<O, T>()
     private val ownersHashesToValuesMap = hashMapOf<Int, T>()
 
     override fun invoke(scopeOwner: O): T {
+        //TODO check newInvoke function
         synchronized(this) {
             val ownerHash = scopeOwner.hashCode()
             with(ownersHashesToValuesMap[ownerHash]) {
@@ -27,6 +30,19 @@ class SingleProvider<O, T> internal constructor(
                     return newValue
                 }
                 return this
+            }
+        }
+    }
+
+    private fun newInvoke(scopeOwner: O): T {
+        synchronized(this) {
+            val dependency = weakHashMap[scopeOwner]
+            if (dependency == null) {
+                val newDependency = provider.invoke(scopeOwner)
+                weakHashMap[scopeOwner] = newDependency
+                return newDependency
+            } else {
+                return dependency
             }
         }
     }
