@@ -5,65 +5,69 @@ import dm.uporov.feature_home.HomeActivity
 import dm.uporov.feature_home.HomeActivityComponentDefinition
 import dm.uporov.feature_home.HomeActivityComponentDependencies
 import dm.uporov.list.ListFragment
+import dm.uporov.list.ListFragmentComponentDefinition
 import dm.uporov.list.ListFragmentComponentDependencies
-import dm.uporov.list.listFragmentComponentDefinition
-import dm.uporov.machete.exception.MacheteIsNotInitializedException
+import dm.uporov.machete.exception.SubFeatureIsNotInitializedException
 import dm.uporov.machete.provider.Provider
 import dm.uporov.machete.provider.mapOwner
+import java.util.*
 
-private lateinit var instance: HomeActivityComponent
+private val componentsMap = WeakHashMap<HomeActivity, HomeActivityComponent>()
 
-fun setHomeActivityComponent(component: HomeActivityComponent) {
-  instance = component
+fun setHomeActivityComponent(owner: HomeActivity, component: HomeActivityComponent) {
+    componentsMap[owner] = component
 }
 
-private fun getComponent(): HomeActivityComponent {
-  if (!::instance.isInitialized) throw MacheteIsNotInitializedException()
-   return instance
+private fun HomeActivity.getComponent(): HomeActivityComponent {
+    return componentsMap[this] ?: throw SubFeatureIsNotInitializedException(this::class)
 }
 
 fun HomeActivity.getAnalytics(): Analytics {
-   return getComponent().analyticsProvider.invoke(this)
+    return getComponent().analyticsProvider.invoke(this)
 }
 
 fun HomeActivity.injectAnalytics(): Lazy<Analytics> {
-   return lazy { getComponent().analyticsProvider.invoke(this) }
+    return lazy { getComponent().analyticsProvider.invoke(this) }
 }
 
 fun HomeActivity.inflateListFragment(fragment: ListFragment) {
+    val component = getComponent()
     dm.uporov.list.generated.setListFragmentComponent(
         fragment,
         dm.uporov.list.generated.ListFragmentComponent.listFragmentComponent(
-            listFragmentComponentDefinition,
-            ListFragmentComponentDependenciesResolver(getComponent())
+            component.listFragmentComponentDefinition,
+            ListFragmentComponentDependenciesResolver(component)
         )
     )
 }
 
 class HomeActivityComponent private constructor(
-  val analyticsProvider: Provider<HomeActivity, Analytics>,
-  val homeActivityFromListFragmentProvider: Provider<ListFragment, HomeActivity>
+    val analyticsProvider: Provider<HomeActivity, Analytics>,
+    val homeActivityFromListFragmentProvider: Provider<ListFragment, HomeActivity>,
+    val listFragmentComponentDefinition: ListFragmentComponentDefinition
 ) {
-  companion object {
-    fun homeActivityComponent(definition: HomeActivityComponentDefinition,
-                              dependencies: HomeActivityComponentDependencies
-    ): HomeActivityComponent {
-                                  val homeActivityComponent = HomeActivityComponent(
-                                      
-          homeActivityFromListFragmentProvider = definition.homeActivityFromListFragmentProvider, 
-          analyticsProvider = dependencies.analyticsProvider
-                                      )
-      dm.uporov.list.setListFragmentComponent(
-              dm.uporov.list.ListFragmentComponent.listFragmentComponent(
-                  definition.listFragmentComponentDefinition,
-                  ListFragmentComponentDependenciesResolver(
-                      homeActivityComponent
-                  )
-              )
-          )
-      return homeActivityComponent
+    companion object {
+        fun homeActivityComponent(
+            definition: HomeActivityComponentDefinition,
+            dependencies: HomeActivityComponentDependencies
+        ): HomeActivityComponent {
+            val homeActivityComponent = HomeActivityComponent(
+
+                homeActivityFromListFragmentProvider = definition.homeActivityFromListFragmentProvider,
+                analyticsProvider = dependencies.analyticsProvider,
+                listFragmentComponentDefinition = definition.listFragmentComponentDefinition
+            )
+            dm.uporov.list.setListFragmentComponent(
+                dm.uporov.list.ListFragmentComponent.listFragmentComponent(
+                    definition.listFragmentComponentDefinition,
+                    ListFragmentComponentDependenciesResolver(
+                        homeActivityComponent
+                    )
+                )
+            )
+            return homeActivityComponent
+        }
     }
-  }
 
 }
 

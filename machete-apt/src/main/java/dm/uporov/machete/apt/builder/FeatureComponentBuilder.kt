@@ -57,6 +57,7 @@ internal class FeatureComponentBuilder(
             .withGetFunctions()
             .withInjectFunctions()
             .withComponent()
+            .withResolvers()
             .build()
     }
 
@@ -167,7 +168,6 @@ internal class FeatureComponentBuilder(
             TypeSpec.classBuilder(componentClassName)
                 .withComponentProvidersProperties()
                 .withComponentCompanion()
-                .withResolvers()
                 .build()
         )
     }
@@ -271,8 +271,7 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun TypeSpec.Builder.withResolvers() = apply {
-
+    private fun FileSpec.Builder.withResolvers() = apply {
         feature.modules.forEach {
             val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
             val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
@@ -282,7 +281,6 @@ internal class FeatureComponentBuilder(
 
             addType(
                 TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
-                    .addModifiers(KModifier.PRIVATE)
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
@@ -358,7 +356,6 @@ internal class FeatureComponentBuilder(
 
             addType(
                 TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
-                    .addModifiers(KModifier.PRIVATE)
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
