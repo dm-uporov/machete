@@ -4,11 +4,10 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import dm.uporov.machete.annotation.FeatureScope
-import dm.uporov.machete.provider.MyInterface
 import dm.uporov.repository_items_api.Item
 
 @FeatureScope(ListFragment::class)
-class ItemsAdapter : RecyclerView.Adapter<ItemViewHolder>(), MyInterface {
+class ItemsAdapter : RecyclerView.Adapter<ItemViewHolder>() {
 
     private val itemsList = mutableListOf<Item>()
 

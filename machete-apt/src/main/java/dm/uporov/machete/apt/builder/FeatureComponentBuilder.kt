@@ -85,6 +85,7 @@ internal class FeatureComponentBuilder(
         val properties = feature.internalDependencies
             .asSequence()
             .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+            .minus(feature.dependencies)
             .distinct()
             .map(::dependencyProvider)
             .plus(feature.features.asSequence().map(::featureParentProvider))
@@ -226,6 +227,7 @@ internal class FeatureComponentBuilder(
                                             .flatten()
                                     )
                                     .distinct()
+                                    .minus(feature.dependencies)
                                     .map {
                                         val providerName = it.providerName()
                                         "\n$providerName = definition.$providerName"
@@ -329,11 +331,18 @@ internal class FeatureComponentBuilder(
                                 val dependencyUniqueName = type.flatGenerics()
                                 val getterName = dependencyUniqueName.asGetterName()
                                 val providerName = dependencyUniqueName.asProviderName()
+
+                                val provider = if (feature.dependencies.contains(dependency)) {
+                                    "dependencies"
+                                } else {
+                                    "definition"
+                                }
+
                                 addFunction(
                                     FunSpec.builder(getterName)
                                         .addModifiers(KModifier.OVERRIDE)
                                         .returns(type)
-                                        .addStatement(" return definition.$providerName.invoke($coreClassParameter)")
+                                        .addStatement(" return $provider.$providerName.invoke($coreClassParameter)")
                                         .build()
                                 )
                             }

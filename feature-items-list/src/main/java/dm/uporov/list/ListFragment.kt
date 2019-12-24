@@ -1,5 +1,6 @@
 package dm.uporov.list
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,7 +16,7 @@ import dm.uporov.repository_items_api.Item
 
 @MacheteFeature(
     modules = [ItemsRepositoryCore::class],
-    dependencies = [Analytics::class]
+    dependencies = [Analytics::class, Context::class]
 )
 class ListFragment : Fragment(), ListView {
 
