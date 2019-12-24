@@ -31,11 +31,16 @@ internal class FeatureComponentBuilder(
     private val componentDefinitionClassName =
         ClassName.bestGuess("$coreClassPackage.$componentDefinitionName")
 
+    private val isRelevantForLambdaName = "isRelevantFor"
+    private val isRelevantForLambdaType = LambdaTypeName.get(
+        parameters = listOf(ParameterSpec.unnamed(coreClassName)),
+        returnType = Boolean::class.asTypeName()
+    )
+
     fun buildDependencies(): FileSpec {
         return FileSpec.builder(coreClassPackage, componentDependenciesName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withDependenciesInterface()
             .build()
     }
@@ -44,7 +49,6 @@ internal class FeatureComponentBuilder(
         return FileSpec.builder(coreClassPackage, componentDefinitionName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withDefinition()
             .build()
     }
@@ -53,12 +57,11 @@ internal class FeatureComponentBuilder(
         return FileSpec.builder(coreClassPackage, componentName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory", "mapOwner", "just")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
-            .withComponentField()
+            .addImport("dm.uporov.machete.exception", "SubFeatureIsNotInitializedException")
+            .withComponentsListField()
             .withGetFunctions()
             .withInjectFunctions()
             .withComponent()
-            .withResolvers()
             .build()
     }
 
@@ -101,28 +104,32 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun FileSpec.Builder.withComponentField() = apply {
+    private fun FileSpec.Builder.withComponentsListField() = apply {
         addProperty(
             PropertySpec.builder(
-                "instance",
-                componentClassName,
-                KModifier.PRIVATE, KModifier.LATEINIT
+                "componentsList",
+                ClassName("kotlin.collections", "MutableList")
+                    .parameterizedBy(componentClassName),
+                KModifier.PRIVATE
             )
                 .mutable(true)
+                .initializer("mutableListOf<$componentName>()")
                 .build()
         )
         addFunction(
             FunSpec.builder(componentName.asSetterName())
                 .addParameter("component", componentClassName)
-                .addStatement("instance = component")
+                .addStatement("componentsList.add(component)")
                 .build()
         )
         addFunction(
             FunSpec.builder("getComponent")
+                .receiver(coreClassName)
                 .addModifiers(KModifier.PRIVATE)
                 .returns(componentClassName)
-                .addStatement("if (!::instance.isInitialized) throw MacheteIsNotInitializedException()")
-                .addStatement(" return instance")
+                .addStatement("val component = componentsList.find { it.$isRelevantForLambdaName(this) }")
+                .addStatement("if (component == null) throw SubFeatureIsNotInitializedException(this::class)")
+                .addStatement("return component")
                 .build()
         )
     }
@@ -169,16 +176,20 @@ internal class FeatureComponentBuilder(
             TypeSpec.classBuilder(componentClassName)
                 .withComponentProvidersProperties()
                 .withComponentCompanion()
+                .withResolvers()
                 .build()
         )
     }
 
     private fun TypeSpec.Builder.withComponentProvidersProperties() = apply {
         val properties = feature.scopeDependencies
+            .asSequence()
             .plus(feature.modules.map(Module::provideDependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
             .plus(feature.features.map(::featureParentProvider))
+            .plus(isRelevantForLambdaName to isRelevantForLambdaType)
+            .toList()
 
         withConstructorWithProperties(
             properties,
@@ -193,6 +204,7 @@ internal class FeatureComponentBuilder(
                     FunSpec.builder(componentName.decapitalize())
                         .addParameter("definition", componentDefinitionClassName)
                         .addParameter("dependencies", componentDependenciesClassName)
+                        .addParameter(isRelevantForLambdaName, isRelevantForLambdaType)
                         .returns(componentClassName)
                         .apply {
                             val modulesWithDefinitionsNames = feature.modules.map {
@@ -242,6 +254,7 @@ internal class FeatureComponentBuilder(
                                             }(definition, it) })"
                                         }.joinToString()
                                     })
+                                    .plus("$isRelevantForLambdaName = $isRelevantForLambdaName")
                                     .joinToString()}
                             )
                             """.trimIndent()
@@ -258,7 +271,8 @@ internal class FeatureComponentBuilder(
                                             definition.${featureName.asComponentDefinitionClassName().decapitalize()},
                                             ${featureName.asComponentDependenciesClassName().asResolverClassName()}(
                                                 ${componentName.decapitalize()}
-                                            )
+                                            ),
+                                            definition.${featureParentProvider(it).first}.$isRelevantForLambdaName
                                         )
                                     )
                                 """.trimIndent()
@@ -272,7 +286,7 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun FileSpec.Builder.withResolvers() = apply {
+    private fun TypeSpec.Builder.withResolvers() = apply {
         feature.modules.forEach {
             val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
             val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
@@ -282,6 +296,7 @@ internal class FeatureComponentBuilder(
 
             addType(
                 TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
+                    .addModifiers(KModifier.PRIVATE)
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()

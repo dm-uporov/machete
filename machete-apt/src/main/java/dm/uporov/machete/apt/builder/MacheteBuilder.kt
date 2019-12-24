@@ -31,7 +31,8 @@ internal class MacheteBuilder(appFeature: Feature) {
                                     $corePackage.${coreComponentName.asSetterName()}(
                                         $corePackage.$coreComponentName.${coreComponentName.decapitalize()}(
                                             ${coreDefinitionName.decapitalize()},
-                                            object : $corePackage.$coreDependenciesName {}
+                                            object : $corePackage.$coreDependenciesName {},
+                                            { true }
                                         )
                                     )
                                 """.trimIndent()
