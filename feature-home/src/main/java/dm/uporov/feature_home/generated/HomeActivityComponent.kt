@@ -10,16 +10,16 @@ import dm.uporov.list.ListFragmentComponentDependencies
 import dm.uporov.machete.exception.SubFeatureIsNotInitializedException
 import dm.uporov.machete.provider.Provider
 import dm.uporov.machete.provider.mapOwner
-import java.util.*
 
-private val componentsMap = WeakHashMap<HomeActivity, HomeActivityComponent>()
+private val componentsList = mutableListOf<HomeActivityComponent>()
 
-fun setHomeActivityComponent(owner: HomeActivity, component: HomeActivityComponent) {
-    componentsMap[owner] = component
+fun setHomeActivityComponent(component: HomeActivityComponent) {
+    componentsList.add(component)
 }
 
 private fun HomeActivity.getComponent(): HomeActivityComponent {
-    return componentsMap[this] ?: throw SubFeatureIsNotInitializedException(this::class)
+    return componentsList.find { it.isRelevantFor(this) }
+        ?: throw SubFeatureIsNotInitializedException(this::class)
 }
 
 fun HomeActivity.getAnalytics(): Analytics {
@@ -42,18 +42,20 @@ fun HomeActivity.inflateListFragment(fragment: ListFragment) {
 }
 
 class HomeActivityComponent private constructor(
+    val isRelevantFor: (HomeActivity) -> Boolean,
     val analyticsProvider: Provider<HomeActivity, Analytics>,
-    val homeActivityFromListFragmentProvider: Provider<ListFragment, HomeActivity>,
+    val listFragmentParentProvider: Provider<ListFragment, HomeActivity>,
     val listFragmentComponentDefinition: ListFragmentComponentDefinition
 ) {
     companion object {
         fun homeActivityComponent(
+            isRelevantFor: (HomeActivity) -> Boolean,
             definition: HomeActivityComponentDefinition,
             dependencies: HomeActivityComponentDependencies
         ): HomeActivityComponent {
             val homeActivityComponent = HomeActivityComponent(
-
-                homeActivityFromListFragmentProvider = definition.homeActivityFromListFragmentProvider,
+                isRelevantFor = isRelevantFor,
+                listFragmentParentProvider = definition.listFragmentParentProvider,
                 analyticsProvider = dependencies.analyticsProvider,
                 listFragmentComponentDefinition = definition.listFragmentComponentDefinition
             )
@@ -68,7 +70,6 @@ class HomeActivityComponent private constructor(
             return homeActivityComponent
         }
     }
-
 }
 
 class ListFragmentComponentDependenciesResolver(
@@ -77,7 +78,5 @@ class ListFragmentComponentDependenciesResolver(
     override val analyticsProvider: Provider<ListFragment, Analytics>
         get() = homeActivityComponent
             .analyticsProvider
-            .mapOwner(
-                homeActivityComponent.homeActivityFromListFragmentProvider
-            )
+            .mapOwner(homeActivityComponent.listFragmentParentProvider)
 }

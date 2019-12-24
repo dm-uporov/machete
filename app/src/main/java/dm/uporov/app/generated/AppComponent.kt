@@ -4,16 +4,13 @@ import android.content.Context
 import com.example.core_analytics_api.Analytics
 import dm.uporov.analytics.CoreAnalyticsModuleDependencies
 import dm.uporov.app.App
-import dm.uporov.app.AppComponentDefinition
 import dm.uporov.app.AppComponentDependencies
 import dm.uporov.feature_favorites.FavoritesActivity
 import dm.uporov.feature_favorites.FavoritesActivityComponentDependencies
 import dm.uporov.feature_home.HomeActivity
-import dm.uporov.feature_home.HomeActivityComponentDefinition
 import dm.uporov.feature_home.HomeActivityComponentDependencies
-import dm.uporov.feature_home.generated.HomeActivityComponent.Companion.homeActivityComponent
-import dm.uporov.feature_home.generated.setHomeActivityComponent
 import dm.uporov.machete.exception.MacheteIsNotInitializedException
+import dm.uporov.machete.provider.ParentProvider
 import dm.uporov.machete.provider.Provider
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.mapOwner
@@ -45,23 +42,11 @@ fun App.injectAnalytics(): Lazy<Analytics> {
     return lazy { getComponent().analyticsProvider.invoke(this) }
 }
 
-fun inflate(homeActivity: HomeActivity) {
-    val component = getComponent()
-    setHomeActivityComponent(
-        homeActivity,
-        homeActivityComponent(
-            component.homeActivityComponentDefinition,
-            HomeActivityComponentDependenciesResolver(component)
-        )
-    )
-}
-
 class AppComponent private constructor(
     val contextProvider: Provider<App, Context>,
     val analyticsProvider: Provider<App, Analytics>,
-    val appFromHomeActivityProvider: Provider<HomeActivity, App>,
-    val appFromFavoritesActivityProvider: Provider<FavoritesActivity, App>,
-    val homeActivityComponentDefinition: HomeActivityComponentDefinition
+    val appFromHomeActivityProvider: ParentProvider<HomeActivity, App>,
+    val appFromFavoritesActivityProvider: ParentProvider<FavoritesActivity, App>
 ) {
     companion object {
         fun appComponent(
@@ -77,8 +62,7 @@ class AppComponent private constructor(
                 analyticsProvider =
                 definition.coreAnalyticsModuleDefinition.analyticsProvider.mapOwner(just {
                     CoreAnalyticsModuleDependenciesResolver(definition, it)
-                }),
-                homeActivityComponentDefinition = definition.homeActivityComponentDefinition
+                })
             )
             dm.uporov.feature_home.setHomeActivityComponent(
                 dm.uporov.feature_home.HomeActivityComponent.homeActivityComponent(

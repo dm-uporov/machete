@@ -15,12 +15,8 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val fragment = ListFragment::class.java.newInstance()
-
-        inflateListFragment(fragment)
-
         supportFragmentManager.beginTransaction()
-            .replace(android.R.id.content, fragment)
+            .replace(android.R.id.content, ListFragment::class.java.newInstance())
             .commit()
     }
 }

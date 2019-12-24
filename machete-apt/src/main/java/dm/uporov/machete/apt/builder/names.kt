@@ -17,5 +17,5 @@ internal fun String.asComponentClassName() = "%sComponent".format(this)
 internal fun String.asComponentDependenciesClassName() = "%sComponentDependencies".format(this)
 internal fun String.asComponentDefinitionClassName() = "%sComponentDefinition".format(this)
 
-internal fun String.providerFrom(from: String) = "${this.decapitalize()}From${from}Provider"
+internal fun String.parentProvider() = "${this.decapitalize()}ParentProvider"
 internal fun Symbol.providerName() = asType().asTypeName().flatGenerics().asProviderName()

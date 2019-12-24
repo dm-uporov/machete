@@ -7,6 +7,7 @@ import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
+import dm.uporov.machete.provider.ParentProvider
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
@@ -83,7 +84,7 @@ internal class FeatureComponentBuilder(
             .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
-            .plus(feature.features.asSequence().map(::featureFromChildProvider))
+            .plus(feature.features.asSequence().map(::featureParentProvider))
             .plus(feature.features.asSequence().map(::featureDefinition))
             .plus(feature.modules.asSequence().map(::moduleDefinition))
             .toList()
@@ -177,7 +178,7 @@ internal class FeatureComponentBuilder(
             .plus(feature.modules.map(Module::provideDependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
-            .plus(feature.features.map(::featureFromChildProvider))
+            .plus(feature.features.map(::featureParentProvider))
 
         withConstructorWithProperties(
             properties,
@@ -219,7 +220,7 @@ internal class FeatureComponentBuilder(
                                     }
                                     .plus(feature.features
                                         .asSequence()
-                                        .map(::featureFromChildProvider)
+                                        .map(::featureParentProvider)
                                         .map {
                                             val name = it.first
                                             "\n$name = definition.$name"
@@ -392,9 +393,7 @@ internal class FeatureComponentBuilder(
                                              return $componentParameter
                                              .$providerName
                                              .mapOwner(
-                                                $componentParameter.${coreClassSimpleName.providerFrom(
-                                                    uniqueName
-                                                )}
+                                                $componentParameter.${uniqueName.parentProvider()}
                                              )
                                         """.trimIndent()
                                             )
@@ -419,15 +418,14 @@ internal class FeatureComponentBuilder(
         return providerName to providerType
     }
 
-    private fun featureFromChildProvider(child: Feature): Pair<String, TypeName> {
+    private fun featureParentProvider(child: Feature): Pair<String, TypeName> {
         val uniqueName = child.coreClass.asType().asTypeName().flatGenerics()
-        val providerName = coreClassSimpleName.providerFrom(uniqueName)
 
-        val providerType = Provider::class.asClassName().parameterizedBy(
+        val providerType = ParentProvider::class.asClassName().parameterizedBy(
             child.coreClass.toClassName(),
             coreClassName
         )
-        return providerName to providerType
+        return uniqueName.parentProvider() to providerType
     }
 
     private fun featureDefinition(child: Feature): Pair<String, TypeName> {

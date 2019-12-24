@@ -35,7 +35,7 @@ fun FavoritesActivity.injectAnalytics(): Lazy<Analytics> {
 
 class FavoritesActivityComponent private constructor(
   val analyticsProvider: Provider<FavoritesActivity, Analytics>,
-  val favoritesActivityFromListFragmentProvider: Provider<ListFragment, FavoritesActivity>
+  val listFragmentParentProvider: Provider<ListFragment, FavoritesActivity>
 ) {
   companion object {
     fun favoritesActivityComponent(definition: FavoritesActivityComponentDefinition,
@@ -43,8 +43,7 @@ class FavoritesActivityComponent private constructor(
     ): FavoritesActivityComponent {
                                   val favoritesActivityComponent = FavoritesActivityComponent(
                                       
-          favoritesActivityFromListFragmentProvider =
-              definition.favoritesActivityFromListFragmentProvider, 
+          listFragmentParentProvider = definition.listFragmentParentProvider,
           analyticsProvider = dependencies.analyticsProvider
                                       )
       dm.uporov.list.setListFragmentComponent(
@@ -67,6 +66,6 @@ class ListFragmentComponentDependenciesResolver(
         get() = favoritesActivityComponent
             .analyticsProvider
             .mapOwner(
-                favoritesActivityComponent.favoritesActivityFromListFragmentProvider
+                favoritesActivityComponent.listFragmentParentProvider
             )
 }
