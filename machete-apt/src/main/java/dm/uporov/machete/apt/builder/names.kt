@@ -25,5 +25,7 @@ object FieldName {
     internal const val DEFINITION = "definition"
     internal const val DEPENDENCIES = "dependencies"
 
+    internal const val FEATURE_OWNER = "featureOwner"
+
     internal const val IS_RELEVANT_FOR = "isRelevantFor"
 }
