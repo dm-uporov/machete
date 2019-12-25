@@ -3,6 +3,10 @@ package dm.uporov.machete.apt.builder
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
+import dm.uporov.machete.apt.builder.FieldName.IS_RELEVANT_FOR
+import dm.uporov.machete.apt.builder.FieldName.COMPONENT
+import dm.uporov.machete.apt.builder.FieldName.DEFINITION
+import dm.uporov.machete.apt.builder.FieldName.DEPENDENCIES
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.apt.utils.flatGenerics
@@ -11,7 +15,6 @@ import dm.uporov.machete.provider.ParentProvider
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
-
 
 internal class FeatureComponentBuilder(
     private val feature: Feature
@@ -31,7 +34,6 @@ internal class FeatureComponentBuilder(
     private val componentDefinitionClassName =
         ClassName.bestGuess("$coreClassPackage.$componentDefinitionName")
 
-    private val isRelevantForLambdaName = "isRelevantFor"
     private val isRelevantForLambdaType = LambdaTypeName.get(
         parameters = listOf(ParameterSpec.unnamed(coreClassName)),
         returnType = Boolean::class.asTypeName()
@@ -40,7 +42,6 @@ internal class FeatureComponentBuilder(
     fun buildDependencies(): FileSpec {
         return FileSpec.builder(coreClassPackage, componentDependenciesName)
             .addImport(coreClassPackage, coreClassSimpleName)
-            .addImport("dm.uporov.machete.provider", "single", "factory")
             .withDependenciesInterface()
             .build()
     }
@@ -48,7 +49,6 @@ internal class FeatureComponentBuilder(
     fun buildDefinition(): FileSpec {
         return FileSpec.builder(coreClassPackage, componentDefinitionName)
             .addImport(coreClassPackage, coreClassSimpleName)
-            .addImport("dm.uporov.machete.provider", "single", "factory")
             .withDefinition()
             .build()
     }
@@ -85,7 +85,9 @@ internal class FeatureComponentBuilder(
         val properties = feature.internalDependencies
             .asSequence()
             .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+            .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
             .minus(feature.dependencies)
+            .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
             .plus(feature.features.asSequence().map(::featureParentProvider))
@@ -119,7 +121,7 @@ internal class FeatureComponentBuilder(
         )
         addFunction(
             FunSpec.builder(componentName.asSetterName())
-                .addParameter("component", componentClassName)
+                .addParameter(COMPONENT, componentClassName)
                 .addStatement("componentsList.add(component)")
                 .build()
         )
@@ -128,9 +130,9 @@ internal class FeatureComponentBuilder(
                 .receiver(coreClassName)
                 .addModifiers(KModifier.PRIVATE)
                 .returns(componentClassName)
-                .addStatement("val component = componentsList.find { it.$isRelevantForLambdaName(this) }")
-                .addStatement("if (component == null) throw SubFeatureIsNotInitializedException(this::class)")
-                .addStatement("return component")
+                .addStatement("val $COMPONENT = componentsList.find { it.$IS_RELEVANT_FOR(this) }")
+                .addStatement("if ($COMPONENT == null) throw SubFeatureIsNotInitializedException(this::class)")
+                .addStatement("return $COMPONENT")
                 .build()
         )
     }
@@ -186,10 +188,11 @@ internal class FeatureComponentBuilder(
         val properties = feature.scopeDependencies
             .asSequence()
             .plus(feature.modules.map(Module::provideDependencies).flatten())
+            .plus(feature.features.map(Feature::dependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
             .plus(feature.features.map(::featureParentProvider))
-            .plus(isRelevantForLambdaName to isRelevantForLambdaType)
+            .plus(IS_RELEVANT_FOR to isRelevantForLambdaType)
             .toList()
 
         withConstructorWithProperties(
@@ -203,9 +206,9 @@ internal class FeatureComponentBuilder(
             TypeSpec.companionObjectBuilder()
                 .addFunction(
                     FunSpec.builder(componentName.decapitalize())
-                        .addParameter("definition", componentDefinitionClassName)
-                        .addParameter("dependencies", componentDependenciesClassName)
-                        .addParameter(isRelevantForLambdaName, isRelevantForLambdaType)
+                        .addParameter(DEFINITION, componentDefinitionClassName)
+                        .addParameter(DEPENDENCIES, componentDependenciesClassName)
+                        .addParameter(IS_RELEVANT_FOR, isRelevantForLambdaType)
                         .returns(componentClassName)
                         .apply {
                             val modulesWithDefinitionsNames = feature.modules.map {
@@ -220,43 +223,40 @@ internal class FeatureComponentBuilder(
                             val ${componentName.decapitalize()} = $componentName(
                             ${feature.internalDependencies
                                     .asSequence()
-                                    .plus(
-                                        feature.modules
-                                            .asSequence()
-                                            .map(Module::dependencies)
-                                            .flatten()
-                                    )
+                                    .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+                                    .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
                                     .distinct()
                                     .minus(feature.dependencies)
+                                    .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
                                     .map {
                                         val providerName = it.providerName()
-                                        "\n$providerName = definition.$providerName"
+                                        "\n$providerName = $DEFINITION.$providerName"
                                     }
                                     .plus(feature.features
                                         .asSequence()
                                         .map(::featureParentProvider)
                                         .map {
                                             val name = it.first
-                                            "\n$name = definition.$name"
+                                            "\n$name = $DEFINITION.$name"
                                         })
                                     .plus(feature.dependencies.asSequence().map {
                                         val providerName = it.providerName()
-                                        "\n$providerName = dependencies.$providerName"
+                                        "\n$providerName = $DEPENDENCIES.$providerName"
                                     })
                                     .plus(modulesWithDefinitionsNames.asSequence().map { (module, name) ->
                                         module.provideDependencies.map { dependency ->
                                             val providerName = dependency.providerName()
-                                            "\n$providerName = definition.${name.decapitalize()}.$providerName.mapOwner(just { ${
+                                            "\n$providerName = $DEFINITION.${name.decapitalize()}.$providerName.mapOwner(just { ${
                                             module.coreClass
                                                 .asType()
                                                 .asTypeName()
                                                 .flatGenerics()
                                                 .asModuleDependenciesClassName()
                                                 .asResolverClassName()
-                                            }(definition, it) })"
+                                            }($DEFINITION, $DEPENDENCIES, it) })"
                                         }.joinToString()
                                     })
-                                    .plus("$isRelevantForLambdaName = $isRelevantForLambdaName")
+                                    .plus("$IS_RELEVANT_FOR = $IS_RELEVANT_FOR")
                                     .joinToString()}
                             )
                             """.trimIndent()
@@ -270,11 +270,11 @@ internal class FeatureComponentBuilder(
                                     """
                                     $featurePackage.${featureComponentName.asSetterName()}(
                                         $featurePackage.$featureComponentName.${featureComponentName.decapitalize()}(
-                                            definition.${featureName.asComponentDefinitionClassName().decapitalize()},
+                                            $DEFINITION.${featureName.asComponentDefinitionClassName().decapitalize()},
                                             ${featureName.asComponentDependenciesClassName().asResolverClassName()}(
                                                 ${componentName.decapitalize()}
                                             ),
-                                            definition.${featureParentProvider(it).first}.$isRelevantForLambdaName
+                                            $DEFINITION.${featureParentProvider(it).first}.$IS_RELEVANT_FOR
                                         )
                                     )
                                 """.trimIndent()
@@ -302,17 +302,27 @@ internal class FeatureComponentBuilder(
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
                     .primaryConstructor(
                         FunSpec.constructorBuilder()
-                            .addParameter("definition", componentDefinitionClassName)
+                            .addParameter(DEFINITION, componentDefinitionClassName)
+                            .addParameter(DEPENDENCIES, componentDependenciesClassName)
                             .addParameter(coreClassParameter, coreClassName)
                             .build()
                     )
                     .addProperty(
                         PropertySpec.builder(
-                            "definition",
+                            DEFINITION,
                             componentDefinitionClassName,
                             KModifier.PRIVATE
                         )
-                            .initializer("definition")
+                            .initializer(DEFINITION)
+                            .build()
+                    )
+                    .addProperty(
+                        PropertySpec.builder(
+                            DEPENDENCIES,
+                            componentDependenciesClassName,
+                            KModifier.PRIVATE
+                        )
+                            .initializer(DEPENDENCIES)
                             .build()
                     )
                     .addProperty(
@@ -333,9 +343,9 @@ internal class FeatureComponentBuilder(
                                 val providerName = dependencyUniqueName.asProviderName()
 
                                 val provider = if (feature.dependencies.contains(dependency)) {
-                                    "dependencies"
+                                    DEPENDENCIES
                                 } else {
-                                    "definition"
+                                    DEFINITION
                                 }
 
                                 addFunction(
@@ -360,10 +370,10 @@ internal class FeatureComponentBuilder(
                                         .returns(type)
                                         .addStatement(
                                             """
-                                            return definition
-                                            .$moduleDefinitionName
-                                            .$providerName
-                                            .invoke(this)
+                                            return $DEFINITION
+                                                .$moduleDefinitionName
+                                                .$providerName
+                                                .invoke(this)
                                         """.trimIndent()
                                         )
                                         .build()

@@ -1,5 +1,6 @@
 package dm.uporov.feature_home
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -10,7 +11,7 @@ import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
-    dependencies = [Analytics::class],
+    dependencies = [Analytics::class, Context::class],
     features = [ListFragment::class]
 )
 class HomeActivity : AppCompatActivity() {
