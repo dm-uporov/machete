@@ -12,13 +12,18 @@ import java.util.concurrent.ConcurrentHashMap
 // Provider for scope single dependency
 fun <O : Any, T> single(provide: (O) -> T) = SingleProvider(provide)
 
-class SingleProvider<in O: Any, out T> internal constructor(
+class SingleProvider<in O : Any, out T> internal constructor(
     private val provider: (O) -> T
 ) : Provider<O, T> {
 
     private val ownersToValuesMap = ConcurrentHashMap<O, T>()
 
     override fun invoke(scopeOwner: O): T {
+        val dependency = ownersToValuesMap[scopeOwner]
+        if (dependency != null) {
+            return dependency
+        }
+
         synchronized(this) {
             with(ownersToValuesMap[scopeOwner]) {
                 if (this == null) {
@@ -70,8 +75,6 @@ class SingleProvider<in O: Any, out T> internal constructor(
     }
 
     private fun Any.trashValue() {
-        synchronized(this@SingleProvider) {
-            ownersToValuesMap.remove(this)
-        }
+        ownersToValuesMap.remove(this)
     }
 }
