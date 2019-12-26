@@ -1,5 +1,6 @@
 package dm.uporov.list
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,15 +16,13 @@ import dm.uporov.repository_items_api.Item
 
 @MacheteFeature(
     modules = [ItemsRepositoryCore::class],
-    dependencies = [Analytics::class]
+    dependencies = [Analytics::class, Context::class]
 )
 class ListFragment : Fragment(), ListView {
 
     private val listPresenter by injectListPresenter()
     private val analytics by injectAnalytics()
     private val adapter by injectItemsAdapter()
-
-    lateinit var component: ListFragmentComponent
 
     override fun onCreateView(
         inflater: LayoutInflater,

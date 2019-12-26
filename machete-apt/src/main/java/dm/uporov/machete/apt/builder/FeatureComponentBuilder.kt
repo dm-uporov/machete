@@ -3,14 +3,22 @@ package dm.uporov.machete.apt.builder
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
+import dm.uporov.machete.apt.builder.FieldName.IS_RELEVANT_FOR
+import dm.uporov.machete.apt.builder.FieldName.COMPONENT
+import dm.uporov.machete.apt.builder.FieldName.DEFINITION
+import dm.uporov.machete.apt.builder.FieldName.DEPENDENCIES
+import dm.uporov.machete.apt.builder.FieldName.FEATURE_OWNER
+import dm.uporov.machete.apt.builder.FieldName.COMPONENTS_LIST
+import dm.uporov.machete.apt.model.ConstructorProperty
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
+import dm.uporov.machete.apt.model.asConstructorProperty
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
+import dm.uporov.machete.provider.ParentProvider
 import dm.uporov.machete.provider.Provider
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
-
 
 internal class FeatureComponentBuilder(
     private val feature: Feature
@@ -30,11 +38,14 @@ internal class FeatureComponentBuilder(
     private val componentDefinitionClassName =
         ClassName.bestGuess("$coreClassPackage.$componentDefinitionName")
 
+    private val isRelevantForLambdaType = LambdaTypeName.get(
+        parameters = listOf(ParameterSpec.unnamed(coreClassName)),
+        returnType = Boolean::class.asTypeName()
+    )
+
     fun buildDependencies(): FileSpec {
         return FileSpec.builder(coreClassPackage, componentDependenciesName)
             .addImport(coreClassPackage, coreClassSimpleName)
-            .addImport("dm.uporov.machete.provider", "single", "factory")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withDependenciesInterface()
             .build()
     }
@@ -42,8 +53,6 @@ internal class FeatureComponentBuilder(
     fun buildDefinition(): FileSpec {
         return FileSpec.builder(coreClassPackage, componentDefinitionName)
             .addImport(coreClassPackage, coreClassSimpleName)
-            .addImport("dm.uporov.machete.provider", "single", "factory")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
             .withDefinition()
             .build()
     }
@@ -52,8 +61,8 @@ internal class FeatureComponentBuilder(
         return FileSpec.builder(coreClassPackage, componentName)
             .addImport(coreClassPackage, coreClassSimpleName)
             .addImport("dm.uporov.machete.provider", "single", "factory", "mapOwner", "just")
-            .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
-            .withComponentField()
+            .addImport("dm.uporov.machete.exception", "SubFeatureIsNotInitializedException")
+            .withComponentsListField()
             .withGetFunctions()
             .withInjectFunctions()
             .withComponent()
@@ -80,11 +89,15 @@ internal class FeatureComponentBuilder(
         val properties = feature.internalDependencies
             .asSequence()
             .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+            .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
+            .minus(feature.dependencies)
+            .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
-            .plus(feature.features.asSequence().map(::featureFromChildProvider))
+            .plus(feature.features.asSequence().map(::featureParentProvider))
             .plus(feature.features.asSequence().map(::featureDefinition))
             .plus(feature.modules.asSequence().map(::moduleDefinition))
+            .map(Pair<String, TypeName>::asConstructorProperty)
             .toList()
 
         addType(
@@ -93,34 +106,38 @@ internal class FeatureComponentBuilder(
                 .withSimpleInitialCompanion(
                     ownerName = componentDefinitionName,
                     returns = componentDefinitionClassName,
-                    propertiesNamesWithTypes = properties
+                    constructorProperties = properties
                 )
                 .build()
         )
     }
 
-    private fun FileSpec.Builder.withComponentField() = apply {
+    private fun FileSpec.Builder.withComponentsListField() = apply {
         addProperty(
             PropertySpec.builder(
-                "instance",
-                componentClassName,
-                KModifier.PRIVATE, KModifier.LATEINIT
+                COMPONENTS_LIST,
+                ClassName("kotlin.collections", "MutableList")
+                    .parameterizedBy(componentClassName),
+                KModifier.PRIVATE
             )
                 .mutable(true)
+                .initializer("mutableListOf<$componentName>()")
                 .build()
         )
         addFunction(
             FunSpec.builder(componentName.asSetterName())
-                .addParameter("component", componentClassName)
-                .addStatement("instance = component")
+                .addParameter(COMPONENT, componentClassName)
+                .addStatement("$COMPONENTS_LIST.add($COMPONENT)")
                 .build()
         )
         addFunction(
             FunSpec.builder("getComponent")
+                .receiver(coreClassName)
                 .addModifiers(KModifier.PRIVATE)
                 .returns(componentClassName)
-                .addStatement("if (!::instance.isInitialized) throw MacheteIsNotInitializedException()")
-                .addStatement(" return instance")
+                .addStatement("val $COMPONENT = $COMPONENTS_LIST.find { it.$IS_RELEVANT_FOR(this) }")
+                .addStatement("if ($COMPONENT == null) throw SubFeatureIsNotInitializedException(this::class)")
+                .addStatement("return $COMPONENT")
                 .build()
         )
     }
@@ -130,7 +147,7 @@ internal class FeatureComponentBuilder(
             val dependencyType = it.asType().asTypeName()
             val uniqueName = dependencyType.flatGenerics()
             addFunction(
-                FunSpec.builder("get${uniqueName.capitalize()}")
+                FunSpec.builder("provide${uniqueName.capitalize()}")
                     .receiver(coreClassName)
                     .returns(dependencyType)
                     .addStatement(" return getComponent().${uniqueName.asProviderName()}.invoke(this)")
@@ -167,22 +184,25 @@ internal class FeatureComponentBuilder(
             TypeSpec.classBuilder(componentClassName)
                 .withComponentProvidersProperties()
                 .withComponentCompanion()
-                .withResolvers()
+                .withFeaturesResolvers()
+                .withModulesResolvers()
                 .build()
         )
     }
 
-    private fun TypeSpec.Builder.withComponentProvidersProperties() = apply {
+    private fun TypeSpec.Builder.withComponentProvidersProperties(): TypeSpec.Builder {
         val properties = feature.scopeDependencies
+            .asSequence()
             .plus(feature.modules.map(Module::provideDependencies).flatten())
+            .plus(feature.features.map(Feature::dependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
-            .plus(feature.features.map(::featureFromChildProvider))
+            .plus(feature.features.map(::featureParentProvider))
+            .plus(IS_RELEVANT_FOR to isRelevantForLambdaType)
+            .map(Pair<String, TypeName>::asConstructorProperty)
+            .toList()
 
-        withConstructorWithProperties(
-            properties,
-            KModifier.PRIVATE
-        )
+        return withConstructorWithProperties(properties, KModifier.PRIVATE)
     }
 
     private fun TypeSpec.Builder.withComponentCompanion() = apply {
@@ -190,8 +210,9 @@ internal class FeatureComponentBuilder(
             TypeSpec.companionObjectBuilder()
                 .addFunction(
                     FunSpec.builder(componentName.decapitalize())
-                        .addParameter("definition", componentDefinitionClassName)
-                        .addParameter("dependencies", componentDependenciesClassName)
+                        .addParameter(DEFINITION, componentDefinitionClassName)
+                        .addParameter(DEPENDENCIES, componentDependenciesClassName)
+                        .addParameter(IS_RELEVANT_FOR, isRelevantForLambdaType)
                         .returns(componentClassName)
                         .apply {
                             val modulesWithDefinitionsNames = feature.modules.map {
@@ -206,41 +227,40 @@ internal class FeatureComponentBuilder(
                             val ${componentName.decapitalize()} = $componentName(
                             ${feature.internalDependencies
                                     .asSequence()
-                                    .plus(
-                                        feature.modules
-                                            .asSequence()
-                                            .map(Module::dependencies)
-                                            .flatten()
-                                    )
+                                    .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+                                    .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
                                     .distinct()
+                                    .minus(feature.dependencies)
+                                    .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
                                     .map {
                                         val providerName = it.providerName()
-                                        "\n$providerName = definition.$providerName"
+                                        "\n$providerName = $DEFINITION.$providerName"
                                     }
                                     .plus(feature.features
                                         .asSequence()
-                                        .map(::featureFromChildProvider)
+                                        .map(::featureParentProvider)
                                         .map {
                                             val name = it.first
-                                            "\n$name = definition.$name"
+                                            "\n$name = $DEFINITION.$name"
                                         })
                                     .plus(feature.dependencies.asSequence().map {
                                         val providerName = it.providerName()
-                                        "\n$providerName = dependencies.$providerName"
+                                        "\n$providerName = $DEPENDENCIES.$providerName"
                                     })
                                     .plus(modulesWithDefinitionsNames.asSequence().map { (module, name) ->
                                         module.provideDependencies.map { dependency ->
                                             val providerName = dependency.providerName()
-                                            "\n$providerName = definition.${name.decapitalize()}.$providerName.mapOwner(just { ${
+                                            "\n$providerName = $DEFINITION.${name.decapitalize()}.$providerName.mapOwner(just { ${
                                             module.coreClass
                                                 .asType()
                                                 .asTypeName()
                                                 .flatGenerics()
                                                 .asModuleDependenciesClassName()
                                                 .asResolverClassName()
-                                            }(definition, it) })"
+                                            }($DEFINITION, $DEPENDENCIES, it) })"
                                         }.joinToString()
                                     })
+                                    .plus("$IS_RELEVANT_FOR = $IS_RELEVANT_FOR")
                                     .joinToString()}
                             )
                             """.trimIndent()
@@ -254,10 +274,11 @@ internal class FeatureComponentBuilder(
                                     """
                                     $featurePackage.${featureComponentName.asSetterName()}(
                                         $featurePackage.$featureComponentName.${featureComponentName.decapitalize()}(
-                                            definition.${featureName.asComponentDefinitionClassName().decapitalize()},
+                                            $DEFINITION.${featureName.asComponentDefinitionClassName().decapitalize()},
                                             ${featureName.asComponentDependenciesClassName().asResolverClassName()}(
                                                 ${componentName.decapitalize()}
-                                            )
+                                            ),
+                                            $DEFINITION.${featureParentProvider(it).first}.$IS_RELEVANT_FOR
                                         )
                                     )
                                 """.trimIndent()
@@ -271,85 +292,7 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun TypeSpec.Builder.withResolvers() = apply {
-
-        feature.modules.forEach {
-            val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
-            val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
-            val resolverClassName = dependenciesClassName.asResolverClassName()
-
-            val coreClassParameter = coreClassSimpleName.decapitalize()
-
-            addType(
-                TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
-                    .addModifiers(KModifier.PRIVATE)
-                    .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter("definition", componentDefinitionClassName)
-                            .addParameter(coreClassParameter, coreClassName)
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            "definition",
-                            componentDefinitionClassName,
-                            KModifier.PRIVATE
-                        )
-                            .initializer("definition")
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            coreClassParameter,
-                            coreClassName,
-                            KModifier.PRIVATE
-                        )
-                            .initializer(coreClassParameter)
-                            .build()
-                    )
-                    .apply {
-                        it.dependencies
-                            .forEach { dependency ->
-                                val type = dependency.asType().asTypeName()
-                                val dependencyUniqueName = type.flatGenerics()
-                                val getterName = dependencyUniqueName.asGetterName()
-                                val providerName = dependencyUniqueName.asProviderName()
-                                addFunction(
-                                    FunSpec.builder(getterName)
-                                        .addModifiers(KModifier.OVERRIDE)
-                                        .returns(type)
-                                        .addStatement(" return definition.$providerName.invoke($coreClassParameter)")
-                                        .build()
-                                )
-                            }
-                        it.provideDependencies
-                            .forEach { dependency ->
-                                val type = dependency.asType().asTypeName()
-                                val dependencyUniqueName = type.flatGenerics()
-                                val getterName = dependencyUniqueName.asGetterName()
-                                val providerName = dependencyUniqueName.asProviderName()
-                                val moduleDefinitionName = it.coreClass.toClassName()
-                                    .simpleName.asModuleDefinitionClassName().decapitalize()
-                                addFunction(
-                                    FunSpec.builder(getterName)
-                                        .addModifiers(KModifier.OVERRIDE)
-                                        .returns(type)
-                                        .addStatement(
-                                            """
-                                            return definition
-                                            .$moduleDefinitionName
-                                            .$providerName
-                                            .invoke(this)
-                                        """.trimIndent()
-                                        )
-                                        .build()
-                                )
-                            }
-                    }
-                    .build()
-            )
-        }
+    private fun TypeSpec.Builder.withFeaturesResolvers() = apply {
         feature.features.forEach {
             val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
             val dependenciesClassName = uniqueName.asComponentDependenciesClassName()
@@ -395,9 +338,7 @@ internal class FeatureComponentBuilder(
                                              return $componentParameter
                                              .$providerName
                                              .mapOwner(
-                                                $componentParameter.${coreClassSimpleName.providerFrom(
-                                                    uniqueName
-                                                )}
+                                                $componentParameter.${uniqueName.parentProvider()}
                                              )
                                         """.trimIndent()
                                             )
@@ -406,6 +347,86 @@ internal class FeatureComponentBuilder(
                                     .build()
                             )
                         }
+                    }
+                    .build()
+            )
+        }
+    }
+
+    private fun TypeSpec.Builder.withModulesResolvers() = apply {
+        feature.modules.forEach {
+            val uniqueName = it.coreClass.asType().asTypeName().flatGenerics()
+            val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
+            val resolverClassName = dependenciesClassName.asResolverClassName()
+
+            addType(
+                TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
+                    .addModifiers(KModifier.PRIVATE)
+                    .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
+                    .withConstructorWithProperties(
+                        listOf(
+                            ConstructorProperty(
+                                DEFINITION,
+                                componentDefinitionClassName,
+                                KModifier.PRIVATE
+                            ),
+                            ConstructorProperty(
+                                DEPENDENCIES,
+                                componentDependenciesClassName,
+                                KModifier.PRIVATE
+                            ),
+                            ConstructorProperty(
+                                FEATURE_OWNER,
+                                coreClassName,
+                                KModifier.OVERRIDE
+                            )
+                        )
+                    )
+                    .apply {
+                        it.dependencies
+                            .forEach { dependency ->
+                                val type = dependency.asType().asTypeName()
+                                val dependencyUniqueName = type.flatGenerics()
+                                val getterName = dependencyUniqueName.asGetterName()
+                                val providerName = dependencyUniqueName.asProviderName()
+
+                                val provider = if (feature.dependencies.contains(dependency)) {
+                                    DEPENDENCIES
+                                } else {
+                                    DEFINITION
+                                }
+
+                                addFunction(
+                                    FunSpec.builder(getterName)
+                                        .addModifiers(KModifier.OVERRIDE)
+                                        .returns(type)
+                                        .addStatement(" return $provider.$providerName.invoke($FEATURE_OWNER)")
+                                        .build()
+                                )
+                            }
+                        it.provideDependencies
+                            .forEach { dependency ->
+                                val type = dependency.asType().asTypeName()
+                                val dependencyUniqueName = type.flatGenerics()
+                                val getterName = dependencyUniqueName.asGetterName()
+                                val providerName = dependencyUniqueName.asProviderName()
+                                val moduleDefinitionName = it.coreClass.toClassName()
+                                    .simpleName.asModuleDefinitionClassName().decapitalize()
+                                addFunction(
+                                    FunSpec.builder(getterName)
+                                        .addModifiers(KModifier.OVERRIDE)
+                                        .returns(type)
+                                        .addStatement(
+                                            """
+                                            return $DEFINITION
+                                                .$moduleDefinitionName
+                                                .$providerName
+                                                .invoke(this)
+                                        """.trimIndent()
+                                        )
+                                        .build()
+                                )
+                            }
                     }
                     .build()
             )
@@ -422,15 +443,14 @@ internal class FeatureComponentBuilder(
         return providerName to providerType
     }
 
-    private fun featureFromChildProvider(child: Feature): Pair<String, TypeName> {
+    private fun featureParentProvider(child: Feature): Pair<String, TypeName> {
         val uniqueName = child.coreClass.asType().asTypeName().flatGenerics()
-        val providerName = coreClassSimpleName.providerFrom(uniqueName)
 
-        val providerType = Provider::class.asClassName().parameterizedBy(
+        val providerType = ParentProvider::class.asClassName().parameterizedBy(
             child.coreClass.toClassName(),
             coreClassName
         )
-        return providerName to providerType
+        return uniqueName.parentProvider() to providerType
     }
 
     private fun featureDefinition(child: Feature): Pair<String, TypeName> {

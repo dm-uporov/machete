@@ -25,13 +25,14 @@ internal class MacheteBuilder(appFeature: Feature) {
                 TypeSpec.objectBuilder("Machete")
                     .addFunction(
                         FunSpec.builder("startMachete")
-                            .addParameter(coreDefinitionName, coreDefinitionClass)
+                            .addParameter(coreDefinitionName.decapitalize(), coreDefinitionClass)
                             .addStatement(
                                 """
                                     $corePackage.${coreComponentName.asSetterName()}(
                                         $corePackage.$coreComponentName.${coreComponentName.decapitalize()}(
-                                            $coreDefinitionName,
-                                            object : $corePackage.$coreDependenciesName {}
+                                            ${coreDefinitionName.decapitalize()},
+                                            object : $corePackage.$coreDependenciesName {},
+                                            { true }
                                         )
                                     )
                                 """.trimIndent()

@@ -17,5 +17,16 @@ internal fun String.asComponentClassName() = "%sComponent".format(this)
 internal fun String.asComponentDependenciesClassName() = "%sComponentDependencies".format(this)
 internal fun String.asComponentDefinitionClassName() = "%sComponentDefinition".format(this)
 
-internal fun String.providerFrom(from: String) = "${this.decapitalize()}From${from}Provider"
+internal fun String.parentProvider() = "${this.decapitalize()}ParentProvider"
 internal fun Symbol.providerName() = asType().asTypeName().flatGenerics().asProviderName()
+
+internal object FieldName {
+    internal const val COMPONENT = "component"
+    internal const val DEFINITION = "definition"
+    internal const val DEPENDENCIES = "dependencies"
+
+    internal const val COMPONENTS_LIST = "componentsList"
+    internal const val FEATURE_OWNER = "featureOwner"
+
+    internal const val IS_RELEVANT_FOR = "isRelevantFor"
+}

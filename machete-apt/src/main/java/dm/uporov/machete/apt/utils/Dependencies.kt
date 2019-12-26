@@ -8,12 +8,12 @@ import dm.uporov.machete.apt.model.Dependency
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
-fun Symbol.TypeSymbol.asFeatureScopeDependency() = asScopeDependency(
+internal fun Symbol.TypeSymbol.asFeatureScopeDependency() = asScopeDependency(
     scopeAnnotation = FeatureScope::class,
     featureFieldName = "feature"
 )
 
-fun Symbol.TypeSymbol.asModuleScopeDependency() = asScopeDependency(
+internal fun Symbol.TypeSymbol.asModuleScopeDependency() = asScopeDependency(
     scopeAnnotation = ModuleScope::class,
     featureFieldName = "module"
 )

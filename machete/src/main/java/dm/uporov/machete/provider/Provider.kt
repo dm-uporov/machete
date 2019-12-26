@@ -1,7 +1,7 @@
 package dm.uporov.machete.provider
 
 @FunctionalInterface
-interface Provider<O, T> : (O) -> T
+interface Provider<in O, out T> : (O) -> T
 
 fun <NO, OO, T> Provider<OO, T>.mapOwner(oldOwnerProvider: Provider<NO, OO>): Provider<NO, T> {
     return object : Provider<NO, T> {

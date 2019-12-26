@@ -1,5 +1,6 @@
 package dm.uporov.feature_favorites
 
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.core_analytics_api.Analytics
@@ -7,10 +8,10 @@ import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
-    dependencies = [Analytics::class],
+    dependencies = [Analytics::class, Context::class],
     features = [ListFragment::class]
 )
-class FavoritesActivity: AppCompatActivity() {
+class FavoritesActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
