@@ -6,6 +6,6 @@ import dm.uporov.repository_items.itemsRepositoryModule
 
 val listFragmentComponentDefinition = listFragmentComponentDefinition(
     itemsAdapterProvider = single { ItemsAdapter() },
-    listPresenterProvider = single { ListPresenterImpl(it, it.getAnalytics(), it.getItemsRepository()) },
+    listPresenterProvider = single { ListPresenterImpl(it, it.provideAnalytics(), it.provideItemsRepository()) },
     itemsRepositoryCoreModuleDefinition = itemsRepositoryModule
 )

@@ -147,7 +147,7 @@ internal class FeatureComponentBuilder(
             val dependencyType = it.asType().asTypeName()
             val uniqueName = dependencyType.flatGenerics()
             addFunction(
-                FunSpec.builder("get${uniqueName.capitalize()}")
+                FunSpec.builder("provide${uniqueName.capitalize()}")
                     .receiver(coreClassName)
                     .returns(dependencyType)
                     .addStatement(" return getComponent().${uniqueName.asProviderName()}.invoke(this)")
