@@ -16,14 +16,14 @@ import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.impl.builtins.jvm.JavaToKotlinClassMap
 import kotlin.reflect.jvm.internal.impl.name.FqName
 
-fun Type.ClassType.toClassName(): ClassName {
+internal fun Type.ClassType.toClassName(): ClassName {
     val type = toString()
     return ClassName(type.substringBeforeLast("."), type.substringAfterLast("."))
 }
 
-fun TypeName.flatGenerics(): String = toString().flatGenerics()
+internal fun TypeName.flatGenerics(): String = toString().flatGenerics()
 
-fun TypeName.javaToKotlinType(): TypeName =
+internal fun TypeName.javaToKotlinType(): TypeName =
     if (this is ParameterizedTypeName) {
         (rawType.javaToKotlinType() as ClassName).parameterizedBy(
             *typeArguments.map(TypeName::javaToKotlinType).toTypedArray()
@@ -56,13 +56,13 @@ private fun String.flatGenerics(): String {
     }
 }
 
-fun List<Attribute.Class>?.toTypeSymbols(): Sequence<Symbol.TypeSymbol> {
+internal fun List<Attribute.Class>?.toTypeSymbols(): Sequence<Symbol.TypeSymbol> {
     this ?: return emptySequence()
 
     return this.asSequence().map { it.classType.asElement() }
 }
 
-fun Symbol.ClassSymbol.checkOnDestroyable() {
+internal fun Symbol.ClassSymbol.checkOnDestroyable() {
     if (!isImplementedOneOfInterfaces(LifecycleOwner::class, Destroyable::class)) {
         throw IncorrectCoreOfScopeException(className())
     }

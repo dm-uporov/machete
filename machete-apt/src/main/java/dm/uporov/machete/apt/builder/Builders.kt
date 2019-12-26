@@ -1,24 +1,26 @@
 package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
+import dm.uporov.machete.apt.model.ConstructorProperty
+import dm.uporov.machete.apt.model.asParameter
 
-
-fun TypeSpec.Builder.withConstructorWithProperties(
-    propertiesNamesWithTypes: Iterable<Pair<String, TypeName>>,
+internal fun TypeSpec.Builder.withConstructorWithProperties(
+    constructorProperties: Iterable<ConstructorProperty>,
     vararg constructorModifiers: KModifier
 ) = apply {
     val constructorBuilder = FunSpec.constructorBuilder()
         .addModifiers(*constructorModifiers)
 
-    propertiesNamesWithTypes
-        .forEach { (providerName, providerType) ->
+    constructorProperties
+        .forEach {
             constructorBuilder.addParameter(
-                ParameterSpec.builder(providerName, providerType)
+                ParameterSpec.builder(it.name, it.type)
                     .build()
             )
             addProperty(
-                PropertySpec.builder(providerName, providerType)
-                    .initializer(providerName)
+                PropertySpec.builder(it.name, it.type)
+                    .initializer(it.name)
+                    .addModifiers(*it.modifiers)
                     .build()
             )
         }
@@ -27,10 +29,10 @@ fun TypeSpec.Builder.withConstructorWithProperties(
 }
 
 
-fun TypeSpec.Builder.withSimpleInitialCompanion(
+internal fun TypeSpec.Builder.withSimpleInitialCompanion(
     ownerName: String,
     returns: TypeName,
-    propertiesNamesWithTypes: Iterable<Pair<String, TypeName>>
+    constructorProperties: Iterable<ConstructorProperty>
 ) = apply {
     addType(
         TypeSpec.companionObjectBuilder()
@@ -38,13 +40,14 @@ fun TypeSpec.Builder.withSimpleInitialCompanion(
                 FunSpec.builder(ownerName.decapitalize())
                     .returns(returns)
                     .apply {
-                        addParameters(propertiesNamesWithTypes.map { (name, type) ->
-                            ParameterSpec.builder(name, type).build()
-                        })
+                        addParameters(constructorProperties.map(ConstructorProperty::asParameter))
                         addStatement(
                             """
                             return $ownerName(
-                            ${propertiesNamesWithTypes.joinToString { (name, _) -> "$name = $name" }}
+                            ${constructorProperties
+                                .map(ConstructorProperty::name)
+                                .joinToString { "$it = $it" }
+                            }
                             )
                             """.trimIndent()
                         )

@@ -8,7 +8,7 @@ import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 import kotlin.reflect.KClass
 
-fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) =
+internal fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.TypeSymbol>) =
     asFeature(
         featureAnnotation = MacheteApplication::class,
         internalDependencies = internalDependencies,
@@ -21,7 +21,7 @@ fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<Symbol.Typ
         )
     }
 
-fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
+internal fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
         featureAnnotation = MacheteFeature::class,
         internalDependencies = internalDependencies,
         recursive = true

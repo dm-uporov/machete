@@ -6,12 +6,12 @@ import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 
-fun Symbol.TypeSymbol.asModuleRecursive(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
+internal fun Symbol.TypeSymbol.asModuleRecursive(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
     internalDependencies = internalDependencies,
     recursive = true
 )
 
-fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
+internal fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
     internalDependencies = internalDependencies,
     recursive = false
 )

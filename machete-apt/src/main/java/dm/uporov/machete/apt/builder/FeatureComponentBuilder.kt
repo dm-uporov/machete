@@ -8,8 +8,11 @@ import dm.uporov.machete.apt.builder.FieldName.COMPONENT
 import dm.uporov.machete.apt.builder.FieldName.DEFINITION
 import dm.uporov.machete.apt.builder.FieldName.DEPENDENCIES
 import dm.uporov.machete.apt.builder.FieldName.FEATURE_OWNER
+import dm.uporov.machete.apt.builder.FieldName.COMPONENTS_LIST
+import dm.uporov.machete.apt.model.ConstructorProperty
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
+import dm.uporov.machete.apt.model.asConstructorProperty
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
 import dm.uporov.machete.provider.ParentProvider
@@ -94,6 +97,7 @@ internal class FeatureComponentBuilder(
             .plus(feature.features.asSequence().map(::featureParentProvider))
             .plus(feature.features.asSequence().map(::featureDefinition))
             .plus(feature.modules.asSequence().map(::moduleDefinition))
+            .map(Pair<String, TypeName>::asConstructorProperty)
             .toList()
 
         addType(
@@ -102,7 +106,7 @@ internal class FeatureComponentBuilder(
                 .withSimpleInitialCompanion(
                     ownerName = componentDefinitionName,
                     returns = componentDefinitionClassName,
-                    propertiesNamesWithTypes = properties
+                    constructorProperties = properties
                 )
                 .build()
         )
@@ -111,7 +115,7 @@ internal class FeatureComponentBuilder(
     private fun FileSpec.Builder.withComponentsListField() = apply {
         addProperty(
             PropertySpec.builder(
-                "componentsList",
+                COMPONENTS_LIST,
                 ClassName("kotlin.collections", "MutableList")
                     .parameterizedBy(componentClassName),
                 KModifier.PRIVATE
@@ -123,7 +127,7 @@ internal class FeatureComponentBuilder(
         addFunction(
             FunSpec.builder(componentName.asSetterName())
                 .addParameter(COMPONENT, componentClassName)
-                .addStatement("componentsList.add(component)")
+                .addStatement("$COMPONENTS_LIST.add($COMPONENT)")
                 .build()
         )
         addFunction(
@@ -131,7 +135,7 @@ internal class FeatureComponentBuilder(
                 .receiver(coreClassName)
                 .addModifiers(KModifier.PRIVATE)
                 .returns(componentClassName)
-                .addStatement("val $COMPONENT = componentsList.find { it.$IS_RELEVANT_FOR(this) }")
+                .addStatement("val $COMPONENT = $COMPONENTS_LIST.find { it.$IS_RELEVANT_FOR(this) }")
                 .addStatement("if ($COMPONENT == null) throw SubFeatureIsNotInitializedException(this::class)")
                 .addStatement("return $COMPONENT")
                 .build()
@@ -186,7 +190,7 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun TypeSpec.Builder.withComponentProvidersProperties() = apply {
+    private fun TypeSpec.Builder.withComponentProvidersProperties(): TypeSpec.Builder {
         val properties = feature.scopeDependencies
             .asSequence()
             .plus(feature.modules.map(Module::provideDependencies).flatten())
@@ -195,12 +199,10 @@ internal class FeatureComponentBuilder(
             .map(::dependencyProvider)
             .plus(feature.features.map(::featureParentProvider))
             .plus(IS_RELEVANT_FOR to isRelevantForLambdaType)
+            .map(Pair<String, TypeName>::asConstructorProperty)
             .toList()
 
-        withConstructorWithProperties(
-            properties,
-            KModifier.PRIVATE
-        )
+        return withConstructorWithProperties(properties, KModifier.PRIVATE)
     }
 
     private fun TypeSpec.Builder.withComponentCompanion() = apply {
@@ -361,39 +363,24 @@ internal class FeatureComponentBuilder(
                 TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
                     .addModifiers(KModifier.PRIVATE)
                     .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
-                    .primaryConstructor(
-                        FunSpec.constructorBuilder()
-                            .addParameter(DEFINITION, componentDefinitionClassName)
-                            .addParameter(DEPENDENCIES, componentDependenciesClassName)
-                            .addParameter(FEATURE_OWNER, coreClassName)
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            DEFINITION,
-                            componentDefinitionClassName,
-                            KModifier.PRIVATE
+                    .withConstructorWithProperties(
+                        listOf(
+                            ConstructorProperty(
+                                DEFINITION,
+                                componentDefinitionClassName,
+                                KModifier.PRIVATE
+                            ),
+                            ConstructorProperty(
+                                DEPENDENCIES,
+                                componentDependenciesClassName,
+                                KModifier.PRIVATE
+                            ),
+                            ConstructorProperty(
+                                FEATURE_OWNER,
+                                coreClassName,
+                                KModifier.OVERRIDE
+                            )
                         )
-                            .initializer(DEFINITION)
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            DEPENDENCIES,
-                            componentDependenciesClassName,
-                            KModifier.PRIVATE
-                        )
-                            .initializer(DEPENDENCIES)
-                            .build()
-                    )
-                    .addProperty(
-                        PropertySpec.builder(
-                            FEATURE_OWNER,
-                            coreClassName,
-                            KModifier.OVERRIDE
-                        )
-                            .initializer(FEATURE_OWNER)
-                            .build()
                     )
                     .apply {
                         it.dependencies
