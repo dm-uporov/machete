@@ -24,16 +24,15 @@ class SingleProvider<in O : Any, out T> internal constructor(
             return dependency
         }
 
-        synchronized(this) {
-            with(ownersToValuesMap[scopeOwner]) {
-                if (this == null) {
-                    subscribeOnDestroyCallback(scopeOwner)
-                    val newValue = provider(scopeOwner)
-                    ownersToValuesMap[scopeOwner] = newValue
-                    return newValue
-                }
-                return this
+        synchronized(scopeOwner) {
+            val doubleCheckedDependency = ownersToValuesMap[scopeOwner]
+            if (doubleCheckedDependency != null) {
+                return doubleCheckedDependency
             }
+
+            subscribeOnDestroyCallback(scopeOwner)
+            return provider.invoke(scopeOwner)
+                .also { ownersToValuesMap[scopeOwner] = it }
         }
     }
 
