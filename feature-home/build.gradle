@@ -36,6 +36,7 @@ dependencies {
     implementation project(':core-analytics-api')
     implementation project(':feature-items-list')
     implementation project(':feature-favorites')
+    implementation project(':repository-items')
 
     implementation project(':machete')
     kapt project(':machete-apt')

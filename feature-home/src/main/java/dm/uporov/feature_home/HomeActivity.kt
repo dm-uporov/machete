@@ -4,13 +4,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import com.example.core_analytics_api.Analytics
+import dm.uporov.core_analytics_api.Analytics
 import dm.uporov.feature_favorites.FavoritesActivity
 import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
+import dm.uporov.repository_items.ItemsRepositoryCore
 
 @MacheteFeature(
+    modules = [ItemsRepositoryCore::class],
     dependencies = [Analytics::class, Context::class],
     features = [ListFragment::class]
 )
@@ -21,9 +26,20 @@ class HomeActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(android.R.id.content, ListFragment::class.java.newInstance())
             .commit()
+    }
 
-        Handler().postDelayed({
-            startActivity(Intent(this, FavoritesActivity::class.java))
-        }, 1000)
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.home_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.favorites -> {
+                startActivity(Intent(this, FavoritesActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

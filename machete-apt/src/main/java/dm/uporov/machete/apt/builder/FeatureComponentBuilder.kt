@@ -63,7 +63,7 @@ internal class FeatureComponentBuilder(
             .addImport("dm.uporov.machete.provider", "single", "factory", "mapOwner", "just")
             .addImport("dm.uporov.machete.exception", "SubFeatureIsNotInitializedException")
             .withComponentsListField()
-            .withGetFunctions()
+            .withProvideFunctions()
             .withInjectFunctions()
             .withComponent()
             .build()
@@ -142,12 +142,13 @@ internal class FeatureComponentBuilder(
         )
     }
 
-    private fun FileSpec.Builder.withGetFunctions() = apply {
+    private fun FileSpec.Builder.withProvideFunctions() = apply {
         feature.scopeDependencies.forEach {
             val dependencyType = it.asType().asTypeName()
             val uniqueName = dependencyType.flatGenerics()
             addFunction(
                 FunSpec.builder("provide${uniqueName.capitalize()}")
+                    .addModifiers(KModifier.INTERNAL)
                     .receiver(coreClassName)
                     .returns(dependencyType)
                     .addStatement(" return getComponent().${uniqueName.asProviderName()}.invoke(this)")
@@ -171,6 +172,7 @@ internal class FeatureComponentBuilder(
 
             addFunction(
                 FunSpec.builder("inject${uniqueName.capitalize()}")
+                    .addModifiers(KModifier.INTERNAL)
                     .receiver(coreClassName)
                     .returns(lazy)
                     .addStatement(" return lazy { getComponent().${uniqueName.asProviderName()}.invoke(this) }")

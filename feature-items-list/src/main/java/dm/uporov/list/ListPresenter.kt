@@ -1,7 +1,7 @@
 package dm.uporov.list
 
-import com.example.core_analytics_api.Analytics
-import com.example.core_analytics_api.Event
+import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.core_analytics_api.Event
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.repository_items_api.ItemsRepository
 

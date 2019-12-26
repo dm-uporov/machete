@@ -36,40 +36,36 @@ class SingleProvider<in O : Any, out T> internal constructor(
         }
     }
 
-    private fun subscribeOnDestroyCallback(scopeOwner: Any) {
+    private fun subscribeOnDestroyCallback(scopeOwner: Any, trashable: Any = scopeOwner) {
         if (scopeOwner is ModuleDependencies) {
-            val featureOwner = scopeOwner.featureOwner
-            subscribeOnLifecycle(featureOwner, scopeOwner)
-            subscribeOnDestroyable(featureOwner, scopeOwner)
-        } else {
-            subscribeOnLifecycle(scopeOwner)
-            subscribeOnDestroyable(scopeOwner)
+            return subscribeOnDestroyCallback(scopeOwner.featureOwner, scopeOwner)
+        }
+
+        when (scopeOwner) {
+            is LifecycleOwner -> subscribeOnLifecycle(scopeOwner, trashable)
+            is Destroyable -> subscribeOnDestroyable(scopeOwner, trashable)
         }
     }
 
-    private fun subscribeOnLifecycle(scopeOwner: Any, trashable: Any = scopeOwner) {
-        if (scopeOwner is LifecycleOwner) {
-            val lifecycle = scopeOwner.lifecycle
-            lifecycle.addObserver(object : LifecycleObserver {
-                @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-                fun onDestroy() {
-                    lifecycle.removeObserver(this)
-                    trashable.trashValue()
-                }
-            })
-        }
-    }
-
-    private fun subscribeOnDestroyable(scopeOwner: Any, trashable: Any = scopeOwner) {
-        if (scopeOwner is Destroyable) {
-            object : OnDestroyObserver {
-                override fun onDestroy() {
-                    scopeOwner.removeObserver(this)
-                    trashable.trashValue()
-                }
-            }.run {
-                scopeOwner.addObserver(this)
+    private fun subscribeOnLifecycle(scopeOwner: LifecycleOwner, trashable: Any = scopeOwner) {
+        val lifecycle = scopeOwner.lifecycle
+        lifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            fun onDestroy() {
+                lifecycle.removeObserver(this)
+                trashable.trashValue()
             }
+        })
+    }
+
+    private fun subscribeOnDestroyable(scopeOwner: Destroyable, trashable: Any = scopeOwner) {
+        object : OnDestroyObserver {
+            override fun onDestroy() {
+                scopeOwner.removeObserver(this)
+                trashable.trashValue()
+            }
+        }.run {
+            scopeOwner.addObserver(this)
         }
     }
 

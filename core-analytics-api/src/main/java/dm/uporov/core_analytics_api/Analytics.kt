@@ -1,4 +1,4 @@
-package com.example.core_analytics_api
+package dm.uporov.core_analytics_api
 
 interface Analytics {
 

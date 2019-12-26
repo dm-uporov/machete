@@ -8,15 +8,14 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.core_analytics_api.Analytics
-import com.example.core_analytics_api.Event
+import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.core_analytics_api.Event
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.repository_items.ItemsRepositoryCore
 import dm.uporov.repository_items_api.Item
+import dm.uporov.repository_items_api.ItemsRepository
 
 @MacheteFeature(
-    modules = [ItemsRepositoryCore::class],
-    dependencies = [Analytics::class, Context::class]
+    dependencies = [Analytics::class, Context::class, ItemsRepository::class]
 )
 class ListFragment : Fragment(), ListView {
 
