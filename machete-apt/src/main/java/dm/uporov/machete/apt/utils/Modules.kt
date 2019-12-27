@@ -29,16 +29,18 @@ private fun Symbol.TypeSymbol.asModule(
     )
 
     var modulesParam: List<Attribute.Class>? = null
-    var dependenciesParam: List<Attribute.Class>? = null
-    var provideParam: List<Attribute.Class>? = null
+    var apiParam: List<Attribute.Class>? = null
+    var implementation: List<Attribute.Class>? = null
+    var requiredParam: List<Attribute.Class>? = null
 
     annotationMirror.values.forEach {
         val name = it.fst.simpleName.toString()
         val value = it.snd.value
         when (name) {
             "modules" -> modulesParam = value as? List<Attribute.Class>
-            "dependencies" -> dependenciesParam = value as? List<Attribute.Class>
-            "provide" -> provideParam = value as? List<Attribute.Class>
+            "required" -> requiredParam = value as? List<Attribute.Class>
+            "api" -> apiParam = value as? List<Attribute.Class>
+            "implementation" -> implementation = value as? List<Attribute.Class>
         }
     }
 
@@ -57,8 +59,8 @@ private fun Symbol.TypeSymbol.asModule(
     return Module(
         coreClass = this,
         modules = modules,
-        provideDependencies = provideParam.toTypeSymbols().toList(),
-        dependencies = dependenciesParam.toTypeSymbols().toList(),
-        internalDependencies = internalDependencies
+        api = apiParam.toTypeSymbols().toList(),
+        required = requiredParam.toTypeSymbols().toList(),
+        internalDependencies = implementation.toTypeSymbols().toList() + internalDependencies
     )
 }

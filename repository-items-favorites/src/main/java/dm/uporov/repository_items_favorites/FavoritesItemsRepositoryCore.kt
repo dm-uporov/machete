@@ -11,9 +11,9 @@ import dm.uporov.repository_items_favorites_impl.FavoritesItemsRepositoryImpl
 import dm.uporov.repository_items_impl.ItemsRepositoryImpl
 
 @MacheteModule(
-    modules = [CoreFavorites::class],
-    provide = [ItemsRepository::class],
-    dependencies = [Context::class, FavoritesInteractor::class]
+    api = [ItemsRepository::class],
+    required = [Context::class, FavoritesInteractor::class],
+    modules = [CoreFavorites::class]
 )
 object FavoritesItemsRepositoryCore
 

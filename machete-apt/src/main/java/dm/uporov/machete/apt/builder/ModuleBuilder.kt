@@ -42,7 +42,7 @@ internal class ModuleBuilder(
     }
 
     private fun TypeSpec.Builder.withDependenciesGetters() = apply {
-        (module.dependencies + module.provideDependencies)
+        (module.required + module.api)
             .forEach {
                 val type = it.asType().asTypeName()
                 val uniqueName = type.flatGenerics()

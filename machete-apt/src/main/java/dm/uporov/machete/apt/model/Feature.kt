@@ -11,7 +11,7 @@ internal data class Feature(
 ) {
     val scopeDependencies = dependencies
         .plus(internalDependencies)
-        .plus(modules.map(Module::provideDependencies).flatten())
-        .plus(modules.map(Module::dependencies).flatten())
+        .plus(modules.map(Module::api).flatten())
+        .plus(modules.map(Module::required).flatten())
         .distinct()
 }

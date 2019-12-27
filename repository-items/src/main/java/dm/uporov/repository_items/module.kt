@@ -8,8 +8,8 @@ import dm.uporov.repository_items_api.ItemsRepository
 import dm.uporov.repository_items_impl.ItemsRepositoryImpl
 
 @MacheteModule(
-    provide = [ItemsRepository::class],
-    dependencies = [Context::class]
+    api = [ItemsRepository::class],
+    required = [Context::class]
 )
 object ItemsRepositoryCore
 

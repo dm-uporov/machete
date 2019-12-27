@@ -7,8 +7,8 @@ import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 
 @MacheteModule(
-    dependencies = [Context::class],
-    provide = [FavoritesInteractor::class]
+    api = [FavoritesInteractor::class],
+    required = [Context::class]
 )
 object CoreFavorites
 

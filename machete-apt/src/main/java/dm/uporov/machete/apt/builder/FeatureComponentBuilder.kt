@@ -88,10 +88,10 @@ internal class FeatureComponentBuilder(
     private fun FileSpec.Builder.withDefinition() = apply {
         val properties = feature.internalDependencies
             .asSequence()
-            .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+            .plus(feature.modules.asSequence().map(Module::required).flatten())
             .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
             .minus(feature.dependencies)
-            .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
+            .minus(feature.modules.asSequence().map(Module::api).flatten())
             .distinct()
             .map(::dependencyProvider)
             .plus(feature.features.asSequence().map(::featureParentProvider))
@@ -195,7 +195,7 @@ internal class FeatureComponentBuilder(
     private fun TypeSpec.Builder.withComponentProvidersProperties(): TypeSpec.Builder {
         val properties = feature.scopeDependencies
             .asSequence()
-            .plus(feature.modules.map(Module::provideDependencies).flatten())
+            .plus(feature.modules.map(Module::api).flatten())
             .plus(feature.features.map(Feature::dependencies).flatten())
             .distinct()
             .map(::dependencyProvider)
@@ -229,11 +229,11 @@ internal class FeatureComponentBuilder(
                             val ${componentName.decapitalize()} = $componentName(
                             ${feature.internalDependencies
                                     .asSequence()
-                                    .plus(feature.modules.asSequence().map(Module::dependencies).flatten())
+                                    .plus(feature.modules.asSequence().map(Module::required).flatten())
                                     .plus(feature.features.asSequence().map(Feature::dependencies).flatten())
                                     .distinct()
                                     .minus(feature.dependencies)
-                                    .minus(feature.modules.asSequence().map(Module::provideDependencies).flatten())
+                                    .minus(feature.modules.asSequence().map(Module::api).flatten())
                                     .map {
                                         val providerName = it.providerName()
                                         "\n$providerName = $DEFINITION.$providerName"
@@ -250,7 +250,7 @@ internal class FeatureComponentBuilder(
                                         "\n$providerName = $DEPENDENCIES.$providerName"
                                     })
                                     .plus(modulesWithDefinitionsNames.asSequence().map { (module, name) ->
-                                        module.provideDependencies.map { dependency ->
+                                        module.api.map { dependency ->
                                             val providerName = dependency.providerName()
                                             "\n$providerName = $DEFINITION.${name.decapitalize()}.$providerName.mapOwner(just { ${
                                             module.coreClass
@@ -385,7 +385,7 @@ internal class FeatureComponentBuilder(
                         )
                     )
                     .apply {
-                        it.dependencies
+                        it.required
                             .forEach { dependency ->
                                 val type = dependency.asType().asTypeName()
                                 val dependencyUniqueName = type.flatGenerics()
@@ -406,7 +406,7 @@ internal class FeatureComponentBuilder(
                                         .build()
                                 )
                             }
-                        it.provideDependencies
+                        it.api
                             .forEach { dependency ->
                                 val type = dependency.asType().asTypeName()
                                 val dependencyUniqueName = type.flatGenerics()
