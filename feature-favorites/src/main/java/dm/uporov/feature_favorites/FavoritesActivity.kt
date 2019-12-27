@@ -10,8 +10,8 @@ import dm.uporov.repository_items_favorites.FavoritesItemsRepositoryCore
 
 @MacheteFeature(
     modules = [FavoritesItemsRepositoryCore::class],
-    dependencies = [Analytics::class, Context::class],
-    features = [ListFragment::class]
+    features = [ListFragment::class],
+    required = [Analytics::class, Context::class]
 )
 class FavoritesActivity : AppCompatActivity() {
 

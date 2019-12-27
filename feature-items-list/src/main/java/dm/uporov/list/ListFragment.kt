@@ -15,7 +15,7 @@ import dm.uporov.repository_items_api.Item
 import dm.uporov.repository_items_api.ItemsRepository
 
 @MacheteFeature(
-    dependencies = [Analytics::class, Context::class, ItemsRepository::class]
+    required = [Analytics::class, Context::class, ItemsRepository::class]
 )
 class ListFragment : Fragment(), ListView {
 

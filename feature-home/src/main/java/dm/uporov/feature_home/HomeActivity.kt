@@ -16,8 +16,8 @@ import dm.uporov.repository_items.ItemsRepositoryCore
 
 @MacheteFeature(
     modules = [ItemsRepositoryCore::class],
-    dependencies = [Analytics::class, Context::class],
-    features = [ListFragment::class]
+    features = [ListFragment::class],
+    required = [Analytics::class, Context::class]
 )
 class HomeActivity : AppCompatActivity() {
 

@@ -7,7 +7,7 @@ import dm.uporov.core_analytics_api.Event
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(
-    dependencies = [Analytics::class]
+    required = [Analytics::class]
 )
 class ItemDetailsActivity : AppCompatActivity() {
 

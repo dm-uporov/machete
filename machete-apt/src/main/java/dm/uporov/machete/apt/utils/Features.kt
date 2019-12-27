@@ -16,16 +16,16 @@ internal fun Symbol.TypeSymbol.asApplicationFeature(internalDependencies: List<S
         deepRecursive = false
     ).let {
         it.copy(
-            dependencies = emptyList(),
-            internalDependencies = (it.dependencies + it.internalDependencies).distinct()
+            required = emptyList(),
+            internalDependencies = (it.required + it.internalDependencies).distinct()
         )
     }
 
 internal fun Symbol.TypeSymbol.asFeature(internalDependencies: List<Symbol.TypeSymbol>) = asFeature(
-        featureAnnotation = MacheteFeature::class,
-        internalDependencies = internalDependencies,
-        recursive = true
-    )
+    featureAnnotation = MacheteFeature::class,
+    internalDependencies = internalDependencies,
+    recursive = true
+)
 
 private fun Symbol.TypeSymbol.asFeature(
     featureAnnotation: KClass<*>,
@@ -42,7 +42,8 @@ private fun Symbol.TypeSymbol.asFeature(
 
     var modulesParam: List<Attribute.Class>? = null
     var featuresParam: List<Attribute.Class>? = null
-    var dependenciesParam: List<Attribute.Class>? = null
+    var implementationParam: List<Attribute.Class>? = null
+    var requiredParam: List<Attribute.Class>? = null
 
     annotationMirror.values.forEach {
         val name = it.fst.simpleName.toString()
@@ -50,7 +51,8 @@ private fun Symbol.TypeSymbol.asFeature(
         when (name) {
             "modules" -> modulesParam = value as? List<Attribute.Class>
             "features" -> featuresParam = value as? List<Attribute.Class>
-            "dependencies" -> dependenciesParam = value as? List<Attribute.Class>
+            "implementation" -> implementationParam = value as? List<Attribute.Class>
+            "required" -> requiredParam = value as? List<Attribute.Class>
         }
     }
 
@@ -78,7 +80,7 @@ private fun Symbol.TypeSymbol.asFeature(
         coreClass = this,
         modules = modules,
         features = features,
-        dependencies = dependenciesParam.toTypeSymbols().toList(),
-        internalDependencies = internalDependencies
+        required = requiredParam.toTypeSymbols().toList(),
+        internalDependencies = implementationParam.toTypeSymbols().toList() + internalDependencies
     )
 }

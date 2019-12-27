@@ -6,10 +6,10 @@ internal data class Feature(
     val coreClass: Symbol.TypeSymbol,
     val modules: Set<Module>,
     val features: Set<Feature>,
-    val dependencies: List<Symbol.TypeSymbol>,
+    val required: List<Symbol.TypeSymbol>,
     val internalDependencies: List<Symbol.TypeSymbol>
 ) {
-    val scopeDependencies = dependencies
+    val scopeDependencies = required
         .plus(internalDependencies)
         .plus(modules.map(Module::api).flatten())
         .plus(modules.map(Module::required).flatten())
