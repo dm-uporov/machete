@@ -3,12 +3,12 @@ package dm.uporov.machete.apt.builder
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.sun.tools.javac.code.Symbol
-import dm.uporov.machete.apt.builder.FieldName.IS_RELEVANT_FOR
 import dm.uporov.machete.apt.builder.FieldName.COMPONENT
+import dm.uporov.machete.apt.builder.FieldName.COMPONENTS_LIST
 import dm.uporov.machete.apt.builder.FieldName.DEFINITION
 import dm.uporov.machete.apt.builder.FieldName.DEPENDENCIES
 import dm.uporov.machete.apt.builder.FieldName.FEATURE_OWNER
-import dm.uporov.machete.apt.builder.FieldName.COMPONENTS_LIST
+import dm.uporov.machete.apt.builder.FieldName.IS_RELEVANT_FOR
 import dm.uporov.machete.apt.model.ConstructorProperty
 import dm.uporov.machete.apt.model.Feature
 import dm.uporov.machete.apt.model.Module
@@ -361,10 +361,14 @@ internal class FeatureComponentBuilder(
             val dependenciesClassName = uniqueName.asModuleDependenciesClassName()
             val resolverClassName = dependenciesClassName.asResolverClassName()
 
+            val moduleDefinitionName = it.coreClass.toClassName()
+                .simpleName.asModuleDefinitionClassName().decapitalize()
+
             addType(
                 TypeSpec.classBuilder(ClassName.bestGuess("$coreClassPackage.$resolverClassName"))
                     .addModifiers(KModifier.PRIVATE)
-                    .addSuperinterface(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
+                    .superclass(ClassName.bestGuess("${it.coreClass.packge()}.$dependenciesClassName"))
+                    .addSuperclassConstructorParameter("$DEFINITION.$moduleDefinitionName")
                     .withConstructorWithProperties(
                         listOf(
                             ConstructorProperty(
@@ -403,29 +407,6 @@ internal class FeatureComponentBuilder(
                                         .addModifiers(KModifier.OVERRIDE)
                                         .returns(type)
                                         .addStatement(" return $provider.$providerName.invoke($FEATURE_OWNER)")
-                                        .build()
-                                )
-                            }
-                        it.api
-                            .forEach { dependency ->
-                                val type = dependency.asType().asTypeName()
-                                val dependencyUniqueName = type.flatGenerics()
-                                val getterName = dependencyUniqueName.asGetterName()
-                                val providerName = dependencyUniqueName.asProviderName()
-                                val moduleDefinitionName = it.coreClass.toClassName()
-                                    .simpleName.asModuleDefinitionClassName().decapitalize()
-                                addFunction(
-                                    FunSpec.builder(getterName)
-                                        .addModifiers(KModifier.OVERRIDE)
-                                        .returns(type)
-                                        .addStatement(
-                                            """
-                                            return $DEFINITION
-                                                .$moduleDefinitionName
-                                                .$providerName
-                                                .invoke(this)
-                                        """.trimIndent()
-                                        )
                                         .build()
                                 )
                             }

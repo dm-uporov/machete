@@ -6,7 +6,7 @@ import dm.uporov.core_favorites.coreFavoritesModuleDefinition
 import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 import dm.uporov.repository_items_api.ItemsRepository
-import dm.uporov.repository_items_favorites.generated.FavoritesItemsRepositoryCoreModuleDefinition.Companion.favoritesItemsRepositoryCoreModuleDefinition
+import dm.uporov.repository_items_favorites.FavoritesItemsRepositoryCoreModuleDefinition.Companion.favoritesItemsRepositoryCoreModuleDefinition
 import dm.uporov.repository_items_favorites_impl.FavoritesItemsRepositoryImpl
 import dm.uporov.repository_items_impl.ItemsRepositoryImpl
 

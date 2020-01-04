@@ -1,15 +1,20 @@
 package dm.uporov.machete.apt.utils
 
+import com.squareup.kotlinpoet.ClassName
 import com.sun.tools.javac.code.Attribute
 import com.sun.tools.javac.code.Symbol
 import dm.uporov.machete.annotation.MacheteModule
+import dm.uporov.machete.apt.builder.asModuleDefinitionClassName
+import dm.uporov.machete.apt.builder.asModuleDependenciesClassName
+import dm.uporov.machete.apt.builder.asResolverClassName
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.exception.ClassIsNotAnnotatedException
 
-internal fun Symbol.TypeSymbol.asModuleRecursive(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
-    internalDependencies = internalDependencies,
-    recursive = true
-)
+internal fun Symbol.TypeSymbol.asModuleRecursive(internalDependencies: List<Symbol.TypeSymbol>) =
+    asModule(
+        internalDependencies = internalDependencies,
+        recursive = true
+    )
 
 internal fun Symbol.TypeSymbol.asModule(internalDependencies: List<Symbol.TypeSymbol>) = asModule(
     internalDependencies = internalDependencies,
@@ -63,4 +68,23 @@ private fun Symbol.TypeSymbol.asModule(
         required = requiredParam.toTypeSymbols().toList(),
         internalDependencies = implementation.toTypeSymbols().toList() + internalDependencies
     )
+}
+
+internal fun Module.asDefinition(): Pair<String, ClassName> {
+    val moduleCoreClassName = coreClass.toClassName()
+    val moduleDefinitionName = moduleCoreClassName.simpleName.asModuleDefinitionClassName()
+    val moduleDefinitionClassName =
+        ClassName.bestGuess("${moduleCoreClassName.packageName}.$moduleDefinitionName")
+    return moduleDefinitionName.decapitalize() to moduleDefinitionClassName
+}
+
+internal fun Module.asDependenciesResolver(): Pair<String, ClassName> {
+    val coreClassName = coreClass.toClassName()
+    val resolverClassName = coreClassName.flatGenerics()
+        .asModuleDependenciesClassName()
+        .asResolverClassName()
+
+    val resolverClass = ClassName.bestGuess("${coreClassName.packageName}.$resolverClassName")
+
+    return resolverClassName to resolverClass
 }
