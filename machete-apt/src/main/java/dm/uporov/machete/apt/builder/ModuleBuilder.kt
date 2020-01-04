@@ -2,6 +2,7 @@ package dm.uporov.machete.apt.builder
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import dm.uporov.machete.ModuleDependencies
 import dm.uporov.machete.apt.model.Module
 import dm.uporov.machete.apt.utils.flatGenerics
 import dm.uporov.machete.apt.utils.toClassName
@@ -25,6 +26,7 @@ internal class ModuleBuilder(
     fun build(): FileSpec {
         return FileSpec.builder(coreClassPackage, coreClassSimpleName.asModuleClassName())
             .addImport("dm.uporov.machete.exception", "MacheteIsNotInitializedException")
+            .addImport("dm.uporov.machete", "ModuleDependencies")
             .withModuleDependenciesInterface()
             .withModuleDefinition()
             .build()
@@ -33,13 +35,14 @@ internal class ModuleBuilder(
     private fun FileSpec.Builder.withModuleDependenciesInterface() = apply {
         addType(
             TypeSpec.interfaceBuilder(moduleDependenciesName)
+                .addSuperinterface(ModuleDependencies::class.asTypeName())
                 .withDependenciesGetters()
                 .build()
         )
     }
 
     private fun TypeSpec.Builder.withDependenciesGetters() = apply {
-        (module.dependencies + module.provideDependencies)
+        (module.required + module.api)
             .forEach {
                 val type = it.asType().asTypeName()
                 val uniqueName = type.flatGenerics()

@@ -34,6 +34,8 @@ dependencies {
     implementation project(':feature-favorites')
     implementation project(':feature-home')
 
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0'
+
     implementation project(':machete')
     kapt project(':machete-apt')
 }

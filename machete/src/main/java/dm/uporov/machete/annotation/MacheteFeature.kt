@@ -14,8 +14,10 @@ import kotlin.reflect.KClass
  * Указание здесь какой-либо фичи означает, что мы обязуемся зарезолвить необходимые для нее зависимости.
  * Если какая-либо зависимость резолвится уровнем выше, необходимо явно прописать её в dependencies.
  *
- * @param dependencies внешние зависимости, необходимые для работы данной фичи.
- * Резолвятся либо фичами, которые зависят от данной фичи.
+ * @param implementation зависимости, задействованные внутри фичи
+ *
+ * @param required внешние зависимости, необходимые для работы данной фичи.
+ * Резолвятся фичами, использующими данную фичу.
  *
  */
 @Retention(AnnotationRetention.BINARY)
@@ -23,5 +25,6 @@ import kotlin.reflect.KClass
 annotation class MacheteFeature(
     val modules: Array<KClass<*>> = [],
     val features: Array<KClass<*>> = [],
-    val dependencies: Array<KClass<*>> = []
+    val implementation: Array<KClass<*>> = [],
+    val required: Array<KClass<*>> = []
 )

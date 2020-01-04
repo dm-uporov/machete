@@ -14,6 +14,6 @@ class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     fun bind(item: Item) = with(item) {
         titleTv.text = name
         descriptionTv.text = description
-        priceTv.text = "$$price"
+        priceTv.text = price.toString()
     }
 }

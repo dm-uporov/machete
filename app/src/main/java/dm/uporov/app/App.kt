@@ -2,7 +2,7 @@ package dm.uporov.app
 
 import android.app.Application
 import android.content.Context
-import com.example.core_analytics_api.Event
+import dm.uporov.core_analytics_api.Event
 import dm.uporov.analytics.CoreAnalytics
 import dm.uporov.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
@@ -12,6 +12,7 @@ import dm.uporov.feature_home.HomeActivity
 import dm.uporov.feature_home.homeActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.provider.just
+import dm.uporov.machete.provider.parentProvider
 
 @MacheteApplication(
     modules = [CoreAnalytics::class],
@@ -32,8 +33,8 @@ class App : Application() {
         Machete.startMachete(
             appComponentDefinition(
                 contextProvider = just { this },
-                appFromHomeActivityProvider = just { this },
-                appFromFavoritesActivityProvider = just { this },
+                homeActivityParentProvider = parentProvider({ true }, just { this }),
+                favoritesActivityParentProvider = parentProvider({ true }, just { this }),
                 homeActivityComponentDefinition = homeActivityComponentDefinition,
                 favoritesActivityComponentDefinition = favoritesActivityComponentDefinition,
                 coreAnalyticsModuleDefinition = coreAnalyticsModuleDefinition

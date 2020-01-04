@@ -1,25 +1,45 @@
 package dm.uporov.feature_home
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import com.example.core_analytics_api.Analytics
+import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.feature_favorites.FavoritesActivity
 import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
+import dm.uporov.repository_items.ItemsRepositoryCore
 
 @MacheteFeature(
-    dependencies = [Analytics::class],
-    features = [ListFragment::class]
+    modules = [ItemsRepositoryCore::class],
+    features = [ListFragment::class],
+    required = [Analytics::class, Context::class]
 )
 class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ListFragment::class.java.newInstance()
-            .also(::inflateListFragment)
-            .run {
-                supportFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, this)
-                    .commit()
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, ListFragment::class.java.newInstance())
+            .commit()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.home_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.favorites -> {
+                startActivity(Intent(this, FavoritesActivity::class.java))
+                true
             }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }

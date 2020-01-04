@@ -1,5 +1,6 @@
 package dm.uporov.list
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,23 +8,20 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.core_analytics_api.Analytics
-import com.example.core_analytics_api.Event
+import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.core_analytics_api.Event
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.repository_items.ItemsRepositoryCore
 import dm.uporov.repository_items_api.Item
+import dm.uporov.repository_items_api.ItemsRepository
 
 @MacheteFeature(
-    modules = [ItemsRepositoryCore::class],
-    dependencies = [Analytics::class]
+    required = [Analytics::class, Context::class, ItemsRepository::class]
 )
 class ListFragment : Fragment(), ListView {
 
     private val listPresenter by injectListPresenter()
     private val analytics by injectAnalytics()
     private val adapter by injectItemsAdapter()
-
-    lateinit var component: ListFragmentComponent
 
     override fun onCreateView(
         inflater: LayoutInflater,

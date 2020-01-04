@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">FeatureHome</string>
+
+    <string name="favorites">Favorites</string>
+
 </resources>
