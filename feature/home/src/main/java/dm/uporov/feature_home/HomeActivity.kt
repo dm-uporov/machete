@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.feature_favorites.FavoritesActivity
 import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature

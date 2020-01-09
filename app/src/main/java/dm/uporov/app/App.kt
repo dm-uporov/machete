@@ -2,9 +2,9 @@ package dm.uporov.app
 
 import android.app.Application
 import android.content.Context
-import dm.uporov.core_analytics_api.Event
-import dm.uporov.analytics.CoreAnalytics
-import dm.uporov.analytics.coreAnalyticsModuleDefinition
+import dm.uporov.core.analytics.api.Event
+import dm.uporov.core.analytics.CoreAnalytics
+import dm.uporov.core.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
 import dm.uporov.feature_favorites.FavoritesActivity
 import dm.uporov.feature_favorites.favoritesActivityComponentDefinition

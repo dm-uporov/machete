@@ -8,8 +8,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import dm.uporov.core_analytics_api.Analytics
-import dm.uporov.core_analytics_api.Event
+import dm.uporov.core.analytics.api.Analytics
+import dm.uporov.core.analytics.api.Event
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.repository_items_api.Item
 import dm.uporov.repository_items_api.ItemsRepository

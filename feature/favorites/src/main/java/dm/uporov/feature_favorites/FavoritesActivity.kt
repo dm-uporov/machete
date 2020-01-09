@@ -3,7 +3,7 @@ package dm.uporov.feature_favorites
 import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import dm.uporov.core_analytics_api.Analytics
+import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.repository_items_favorites.FavoritesItemsRepositoryCore

@@ -1,4 +1,4 @@
-package dm.uporov.core_analytics_api
+package dm.uporov.core.analytics.api
 
 data class Event(
     val name: String

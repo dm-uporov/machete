@@ -1,9 +1,9 @@
-package dm.uporov.core_analytics_impl
+package dm.uporov.core.analytics.impl
 
 import android.content.Context
 import android.util.Log
-import dm.uporov.core_analytics_api.Analytics
-import dm.uporov.core_analytics_api.Event
+import dm.uporov.core.analytics.api.Analytics
+import dm.uporov.core.analytics.api.Event
 
 private val TAG = AnalyticsImpl::class.java.simpleName
 
