@@ -4,7 +4,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import dm.uporov.list.R
-import dm.uporov.repository_items_api.Item
+import dm.uporov.repository.items.api.Item
 
 class ItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 

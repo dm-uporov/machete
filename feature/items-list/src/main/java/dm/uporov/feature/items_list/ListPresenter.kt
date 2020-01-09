@@ -3,7 +3,7 @@ package dm.uporov.feature.items_list
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event
 import dm.uporov.machete.annotation.FeatureScope
-import dm.uporov.repository_items_api.ItemsRepository
+import dm.uporov.repository.items.api.ItemsRepository
 
 @FeatureScope(feature = ListFragment::class)
 interface ListPresenter {

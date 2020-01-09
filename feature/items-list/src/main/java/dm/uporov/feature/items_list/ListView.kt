@@ -1,6 +1,6 @@
 package dm.uporov.feature.items_list
 
-import dm.uporov.repository_items_api.Item
+import dm.uporov.repository.items.api.Item
 
 interface ListView {
 

@@ -1,8 +1,8 @@
-package dm.uporov.repository_items_impl
+package dm.uporov.repository.items.impl
 
 import android.content.Context
-import dm.uporov.repository_items_api.Item
-import dm.uporov.repository_items_api.ItemsRepository
+import dm.uporov.repository.items.api.Item
+import dm.uporov.repository.items.api.ItemsRepository
 
 class ItemsRepositoryImpl(
     val context: Context

@@ -1,9 +1,9 @@
-package dm.uporov.repository_items_favorites_impl
+package dm.uporov.repository.favorites_items.impl
 
-import dm.uporov.core_favorites_api.FavoritesInteractor
-import dm.uporov.repository_items_api.Item
-import dm.uporov.repository_items_api.ItemsRepository
-import dm.uporov.repository_items_favorites_api.FavoritesItemsRepository
+import dm.uporov.core.favorites.api.FavoritesInteractor
+import dm.uporov.repository.items.api.Item
+import dm.uporov.repository.items.api.ItemsRepository
+import dm.uporov.repository.favorites_items.api.FavoritesItemsRepository
 
 class FavoritesItemsRepositoryImpl(
     private val allItemsRepository: ItemsRepository,

@@ -5,7 +5,7 @@ import dm.uporov.feature_favorites.provideFavoritesItemsRepository
 import dm.uporov.feature.items_list.listFragmentComponentDefinition
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.parentProvider
-import dm.uporov.repository_items_favorites.favoritesItemsRepositoryModule
+import dm.uporov.repository.favorites_items.favoritesItemsRepositoryModule
 
 val favoritesActivityComponentDefinition =
     FavoritesActivityComponentDefinition.favoritesActivityComponentDefinition(

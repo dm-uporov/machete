@@ -11,7 +11,7 @@ import dm.uporov.feature.favorites.FavoritesActivity
 import dm.uporov.feature_home.R
 import dm.uporov.feature.items_list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.repository_items.ItemsRepositoryCore
+import dm.uporov.repository.items.ItemsRepositoryCore
 
 @MacheteFeature(
     modules = [ItemsRepositoryCore::class],

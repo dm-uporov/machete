@@ -1,5 +1,0 @@
-package dm.uporov.repository_items_favorites_api
-
-import dm.uporov.repository_items_api.ItemsRepository
-
-interface FavoritesItemsRepository : ItemsRepository

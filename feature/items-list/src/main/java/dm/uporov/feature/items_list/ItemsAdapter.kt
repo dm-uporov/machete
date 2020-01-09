@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import dm.uporov.list.R
 import dm.uporov.machete.annotation.FeatureScope
-import dm.uporov.repository_items_api.Item
+import dm.uporov.repository.items.api.Item
 
 @FeatureScope(ListFragment::class)
 class ItemsAdapter : RecyclerView.Adapter<ItemViewHolder>() {

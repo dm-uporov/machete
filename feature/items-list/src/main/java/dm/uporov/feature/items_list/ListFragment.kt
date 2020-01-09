@@ -14,8 +14,8 @@ import dm.uporov.list.*
 import dm.uporov.list.injectAnalytics
 import dm.uporov.list.injectListPresenter
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.repository_items_api.Item
-import dm.uporov.repository_items_api.ItemsRepository
+import dm.uporov.repository.items.api.Item
+import dm.uporov.repository.items.api.ItemsRepository
 
 @MacheteFeature(
     required = [Analytics::class, Context::class, ItemsRepository::class]

@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.feature.items_list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
-import dm.uporov.repository_items_favorites.FavoritesItemsRepositoryCore
+import dm.uporov.repository.favorites_items.FavoritesItemsRepositoryCore
 
 @MacheteFeature(
     modules = [FavoritesItemsRepositoryCore::class],

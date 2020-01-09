@@ -1,4 +1,4 @@
-package dm.uporov.repository_items_api
+package dm.uporov.repository.items.api
 
 interface ItemsRepository {
 
