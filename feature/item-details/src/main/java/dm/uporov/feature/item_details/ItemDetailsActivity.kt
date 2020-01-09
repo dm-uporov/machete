@@ -1,9 +1,10 @@
-package dm.uporov.item_details
+package dm.uporov.feature.item_details
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event
+import dm.uporov.item_details.injectAnalytics
 import dm.uporov.machete.annotation.MacheteFeature
 
 @MacheteFeature(

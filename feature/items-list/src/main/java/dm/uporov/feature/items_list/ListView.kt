@@ -1,4 +1,4 @@
-package dm.uporov.list
+package dm.uporov.feature.items_list
 
 import dm.uporov.repository_items_api.Item
 

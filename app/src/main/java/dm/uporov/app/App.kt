@@ -6,10 +6,10 @@ import dm.uporov.core.analytics.api.Event
 import dm.uporov.core.analytics.CoreAnalytics
 import dm.uporov.core.analytics.coreAnalyticsModuleDefinition
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
-import dm.uporov.feature_favorites.FavoritesActivity
-import dm.uporov.feature_favorites.favoritesActivityComponentDefinition
-import dm.uporov.feature_home.HomeActivity
-import dm.uporov.feature_home.homeActivityComponentDefinition
+import dm.uporov.feature.favorites.FavoritesActivity
+import dm.uporov.feature.favorites.favoritesActivityComponentDefinition
+import dm.uporov.feature.home.HomeActivity
+import dm.uporov.feature.home.homeActivityComponentDefinition
 import dm.uporov.machete.annotation.MacheteApplication
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.parentProvider

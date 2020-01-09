@@ -1,4 +1,4 @@
-package dm.uporov.feature_home
+package dm.uporov.feature.home
 
 import android.content.Context
 import android.content.Intent
@@ -7,8 +7,9 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.core.analytics.api.Analytics
-import dm.uporov.feature_favorites.FavoritesActivity
-import dm.uporov.list.ListFragment
+import dm.uporov.feature.favorites.FavoritesActivity
+import dm.uporov.feature_home.R
+import dm.uporov.feature.items_list.ListFragment
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.repository_items.ItemsRepositoryCore
 

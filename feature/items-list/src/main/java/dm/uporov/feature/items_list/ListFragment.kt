@@ -1,4 +1,4 @@
-package dm.uporov.list
+package dm.uporov.feature.items_list
 
 import android.content.Context
 import android.os.Bundle
@@ -10,6 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event
+import dm.uporov.list.*
+import dm.uporov.list.injectAnalytics
+import dm.uporov.list.injectListPresenter
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.repository_items_api.Item
 import dm.uporov.repository_items_api.ItemsRepository

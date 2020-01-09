@@ -1,4 +1,4 @@
-package dm.uporov.list
+package dm.uporov.feature.items_list
 
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event

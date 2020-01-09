@@ -1,8 +1,9 @@
-package dm.uporov.list
+package dm.uporov.feature.items_list
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import dm.uporov.list.R
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.repository_items_api.Item
 

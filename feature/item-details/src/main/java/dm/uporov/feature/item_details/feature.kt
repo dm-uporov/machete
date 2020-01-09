@@ -1,4 +1,4 @@
-package dm.uporov.item_details
+package dm.uporov.feature.item_details
 
 import dm.uporov.item_details.ItemDetailsActivityComponentDefinition.Companion.itemDetailsActivityComponentDefinition
 
