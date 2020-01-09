@@ -35,9 +35,9 @@ dependencies {
 
     implementation project(':core-favorites')
 
-    api project(':repository-items-api')
+    api project(':repository-items-favorites-api')
+    implementation project(':repository-items')
     implementation project(':repository-items-favorites-impl')
-    implementation project(':repository-items-impl')
 
     implementation project(':machete')
     kapt project(':machete-apt')

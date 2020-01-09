@@ -1,2 +1,23 @@
-include ':app', ':machete-apt', ':feature-items-list', ':machete', ':core-analytics', ':feature-item-details', ':core-analytics-api', ':core-analytics-impl', ':repository-items', ':repository-items-impl', ':repository-items-api', ':feature-home', ':feature-favorites', ':repository-items-favorites-impl', ':repository-items-favorites', ':core-favorites-api', ':core-favorites-impl', ':core-favorites'
-rootProject.name='Machete'
+include ':app',
+        ':machete',
+        ':machete-apt',
+
+        ':core-analytics',
+        ':core-analytics-api',
+        ':core-analytics-impl',
+        ':core-favorites',
+        ':core-favorites-api',
+        ':core-favorites-impl',
+
+        ':feature-favorites',
+        ':feature-home',
+        ':feature-item-details',
+        ':feature-items-list',
+
+        ':repository-items',
+        ':repository-items-api',
+        ':repository-items-impl',
+        ':repository-items-favorites',
+        ':repository-items-favorites-api',
+        ':repository-items-favorites-impl'
+rootProject.name = 'Machete'
