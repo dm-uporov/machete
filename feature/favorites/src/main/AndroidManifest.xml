@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="dm.uporov.feature_favorites" />
+    package="dm.uporov.feature.favorites" />

@@ -11,8 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event
 import dm.uporov.list.*
-import dm.uporov.list.injectAnalytics
-import dm.uporov.list.injectListPresenter
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.repository.items.api.Item
 import dm.uporov.repository.items.api.ItemsRepository

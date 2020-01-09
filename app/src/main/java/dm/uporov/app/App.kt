@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import dm.uporov.core.analytics.api.Event
 import dm.uporov.core.analytics.CoreAnalytics
-import dm.uporov.core.analytics.coreAnalyticsModuleDefinition
+import dm.uporov.core.analytics.coreAnalyticsModule
 import dm.uporov.app.AppComponentDefinition.Companion.appComponentDefinition
 import dm.uporov.feature.favorites.FavoritesActivity
 import dm.uporov.feature.favorites.favoritesActivityComponentDefinition
@@ -37,7 +37,7 @@ class App : Application() {
                 favoritesActivityParentProvider = parentProvider({ true }, just { this }),
                 homeActivityComponentDefinition = homeActivityComponentDefinition,
                 favoritesActivityComponentDefinition = favoritesActivityComponentDefinition,
-                coreAnalyticsModuleDefinition = coreAnalyticsModuleDefinition
+                coreAnalyticsModuleDefinition = coreAnalyticsModule
             )
         )
     }
