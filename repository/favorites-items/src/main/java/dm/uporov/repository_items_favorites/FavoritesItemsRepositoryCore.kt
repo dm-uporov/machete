@@ -1,8 +1,8 @@
 package dm.uporov.repository_items_favorites
 
 import android.content.Context
-import dm.uporov.core_favorites.CoreFavorites
-import dm.uporov.core_favorites.coreFavoritesModuleDefinition
+import dm.uporov.core.favorites.CoreFavorites
+import dm.uporov.core.favorites.coreFavoritesModuleDefinition
 import dm.uporov.machete.annotation.MacheteModule
 import dm.uporov.machete.provider.single
 import dm.uporov.repository_items.ItemsRepositoryCore

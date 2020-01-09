@@ -1,4 +1,4 @@
-package dm.uporov.core_favorites.api
+package dm.uporov.core.favorites.api
 
 interface FavoritesInteractor {
 

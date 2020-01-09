@@ -1,7 +1,7 @@
-package dm.uporov.core_favorites_impl
+package dm.uporov.core.favorites.impl
 
 import android.content.Context
-import dm.uporov.core_favorites_api.FavoritesInteractor
+import dm.uporov.core.favorites.api.FavoritesInteractor
 
 private const val FAVORITES_PREFERENCES = "favorites"
 private const val FAVORITES_KEY = "favorites"
