@@ -35,6 +35,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.1.0'
 
     implementation project(':core:analytics:api')
+    api project(':core:favorites:api')
     api project(':repository:items:api')
 
     implementation project(':machete')

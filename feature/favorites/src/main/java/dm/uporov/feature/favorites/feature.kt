@@ -1,7 +1,5 @@
 package dm.uporov.feature.favorites
 
-import dm.uporov.feature.favorites.FavoritesActivityComponentDefinition
-import dm.uporov.feature.favorites.provideFavoritesItemsRepository
 import dm.uporov.feature.items_list.listFragmentComponent
 import dm.uporov.machete.provider.just
 import dm.uporov.machete.provider.parentProvider
@@ -14,6 +12,7 @@ val favoritesActivityComponentDefinition =
             { it.activity as FavoritesActivity }
         ),
         itemsRepositoryProvider = just { it.provideFavoritesItemsRepository() },
+        favoritesInteractorProvider = just {  },
         listFragmentComponentDefinition = listFragmentComponent,
         favoritesItemsRepositoryCoreModuleDefinition = favoritesItemsRepositoryModule
     )

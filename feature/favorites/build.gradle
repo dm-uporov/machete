@@ -33,6 +33,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.1.0'
 
+    implementation project(':core:favorites')
     implementation project(':core:analytics:api')
     implementation project(':feature:items-list')
     implementation project(':repository:favorites-items')

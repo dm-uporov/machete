@@ -1,6 +1,8 @@
 package dm.uporov.repository.items.api
 
+import kotlinx.coroutines.flow.Flow
+
 interface ItemsRepository {
 
-    fun getItems(): List<Item>
+    fun itemsFlow(): Flow<List<Item>>
 }
