@@ -1,13 +1,15 @@
 package dm.uporov.repository.items.impl
 
 import android.content.Context
+import dm.uporov.core.favorites.api.FavoritesInteractor
 import dm.uporov.repository.items.api.Item
 import dm.uporov.repository.items.api.ItemsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-class ItemsRepositoryImpl(
-    val context: Context
+open class ItemsRepositoryImpl(
+    private val context: Context,
+    private val favoritesInteractor: FavoritesInteractor
 ) : ItemsRepository {
 
     override fun itemsFlow(): Flow<List<Item>> {
@@ -19,4 +21,10 @@ class ItemsRepositoryImpl(
             )
         )
     }
+
+    override suspend fun addToFavorites(item: Item) =
+        favoritesInteractor.addToFavorites(item.id)
+
+    override suspend fun removeFromFavorites(item: Item) =
+        favoritesInteractor.removeFromFavorites(item.id)
 }

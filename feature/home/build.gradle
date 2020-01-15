@@ -39,5 +39,6 @@ dependencies {
     implementation project(':repository:items')
 
     implementation project(':machete')
+    implementation project(':machete-extensions')
     kapt project(':machete-apt')
 }

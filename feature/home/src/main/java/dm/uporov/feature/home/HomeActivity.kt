@@ -8,10 +8,20 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.feature.favorites.FavoritesActivity
-import dm.uporov.feature_home.R
+import dm.uporov.feature.home.HomeActivityComponentDefinition.Companion.homeActivityComponentDefinition
 import dm.uporov.feature.items_list.ListFragment
+import dm.uporov.feature.items_list.listFragmentComponent
+import dm.uporov.feature_home.R
 import dm.uporov.machete.annotation.MacheteFeature
+import dm.uporov.machete.extensions.activityAsParentProvider
 import dm.uporov.repository.items.ItemsRepositoryCore
+import dm.uporov.repository.items.itemsRepositoryModule
+
+val homeActivityComponent = homeActivityComponentDefinition(
+    listFragmentParentProvider = activityAsParentProvider(),
+    listFragmentComponentDefinition = listFragmentComponent,
+    itemsRepositoryCoreModuleDefinition = itemsRepositoryModule
+)
 
 @MacheteFeature(
     modules = [ItemsRepositoryCore::class],

@@ -41,5 +41,6 @@ dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.1'
 
     implementation project(':machete')
+    implementation project(':machete-extensions')
     kapt project(':machete-apt')
 }

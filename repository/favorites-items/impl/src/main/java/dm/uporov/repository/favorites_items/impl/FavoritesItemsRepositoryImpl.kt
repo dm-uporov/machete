@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.combine
 class FavoritesItemsRepositoryImpl(
     private val allItemsRepository: ItemsRepository,
     private val favoritesInteractor: FavoritesInteractor
-) : FavoritesItemsRepository {
+) : FavoritesItemsRepository, ItemsRepository by allItemsRepository {
 
     @ExperimentalCoroutinesApi
     override fun itemsFlow(): Flow<List<Item>> {
