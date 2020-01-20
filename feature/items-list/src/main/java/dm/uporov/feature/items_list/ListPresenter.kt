@@ -8,8 +8,10 @@ import dm.uporov.repository.items.api.ItemsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 @FeatureScope(feature = ListFragment::class)
 interface ListPresenter {
@@ -39,8 +41,11 @@ internal class ListPresenterImpl(
     @ExperimentalCoroutinesApi
     override fun start() {
         analytics.sendEvent(Event("ListPresenterImpl is started"))
-        itemsRepository.itemsFlow()
-            .onEach { view.showItems(it) }
-            .launchIn(coroutineScope)
+        coroutineScope.launch {
+            itemsRepository.itemsFlow()
+                .collect {
+                    view.showItems(it)
+                }
+        }
     }
 }

@@ -252,7 +252,7 @@ internal class FeatureComponentBuilder(
                                     .plus(modulesWithDefinitionsNames.asSequence().map { (module, name) ->
                                         module.api.map { dependency ->
                                             val providerName = dependency.providerName()
-                                            "\n$providerName = $DEFINITION.${name.decapitalize()}.$providerName.mapOwner(just { ${
+                                            "\n$providerName = $DEFINITION.${name.decapitalize()}.$providerName.mapOwner(single { ${
                                             module.coreClass
                                                 .asType()
                                                 .asTypeName()

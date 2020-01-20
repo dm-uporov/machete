@@ -84,11 +84,11 @@ class ListFragment : Fragment(), ListView {
 
     override fun showItems(items: List<Item>) {
         adapter.updateItems(items)
-        analytics.sendEvent(Event("Items are showed"))
+        analytics.sendEvent(Event("Items are shown"))
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
         coroutineScope.cancel()
     }
 }

@@ -48,6 +48,10 @@ class SingleProvider<in O : Any, out T> internal constructor(
     }
 
     private fun subscribeOnLifecycle(scopeOwner: LifecycleOwner, trashable: Any = scopeOwner) {
+        if (scopeOwner.lifecycle.currentState == Lifecycle.State.DESTROYED) {
+            throw RuntimeException("It's prohibited to request dependencies if scope owner is already destroyed")
+        }
+
         val lifecycle = scopeOwner.lifecycle
         lifecycle.addObserver(object : LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
