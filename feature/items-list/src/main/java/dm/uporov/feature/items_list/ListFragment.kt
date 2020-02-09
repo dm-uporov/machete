@@ -12,25 +12,19 @@ import dm.uporov.core.analytics.api.Analytics
 import dm.uporov.core.analytics.api.Event
 import dm.uporov.feature.items_list.ListFragmentComponentDefinition.Companion.listFragmentComponentDefinition
 import dm.uporov.feature.items_list.adapter.ItemsAdapter
-import dm.uporov.feature.items_list.channel.AddToFavoritesClickChannel
-import dm.uporov.feature.items_list.channel.RemoveFromFavoritesClickChannel
+import dm.uporov.feature.items_list.channel.AddToFavoritesClicks
+import dm.uporov.feature.items_list.channel.RemoveFromFavoritesClicks
 import dm.uporov.list.R
 import dm.uporov.machete.annotation.MacheteFeature
 import dm.uporov.machete.provider.single
 import dm.uporov.repository.items.api.Item
 import dm.uporov.repository.items.api.ItemsRepository
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.consumeAsFlow
 
-@FlowPreview
-@ExperimentalCoroutinesApi
 val listFragmentComponent = listFragmentComponentDefinition(
-    coroutineScopeProvider = single { MainScope() },
     itemsAdapterProvider = single {
         ItemsAdapter(
-            it.provideCoroutineScope(),
-            it.provideAddToFavoritesClickChannel(),
-            it.provideRemoveFromFavoritesClickChannel()
+            it.provideAddToFavoritesClicks().observer,
+            it.provideRemoveFromFavoritesClicks().observer
         )
     },
     listPresenterProvider = single {
@@ -38,13 +32,12 @@ val listFragmentComponent = listFragmentComponentDefinition(
             it,
             it.provideAnalytics(),
             it.provideItemsRepository(),
-            it.provideCoroutineScope(),
-            it.provideAddToFavoritesClickChannel().consumeAsFlow(),
-            it.provideRemoveFromFavoritesClickChannel().consumeAsFlow()
+            it.provideAddToFavoritesClicks().observable,
+            it.provideRemoveFromFavoritesClicks().observable
         )
     },
-    addToFavoritesClickChannelProvider = single { AddToFavoritesClickChannel() },
-    removeFromFavoritesClickChannelProvider = single { RemoveFromFavoritesClickChannel() }
+    addToFavoritesClicksProvider = single { AddToFavoritesClicks() },
+    removeFromFavoritesClicksProvider = single { RemoveFromFavoritesClicks() }
 )
 
 @MacheteFeature(
@@ -54,14 +47,12 @@ val listFragmentComponent = listFragmentComponentDefinition(
         ItemsRepository::class
     ],
     implementation = [
-        CoroutineScope::class,
-        AddToFavoritesClickChannel::class,
-        RemoveFromFavoritesClickChannel::class
+        AddToFavoritesClicks::class,
+        RemoveFromFavoritesClicks::class
     ]
 )
 class ListFragment : Fragment(), ListView {
 
-    private val coroutineScope by injectCoroutineScope()
     private val listPresenter by injectListPresenter()
     private val analytics by injectAnalytics()
     private val adapter by injectItemsAdapter()
@@ -85,10 +76,5 @@ class ListFragment : Fragment(), ListView {
     override fun showItems(items: List<Item>) {
         adapter.updateItems(items)
         analytics.sendEvent(Event("Items are shown"))
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        coroutineScope.cancel()
     }
 }

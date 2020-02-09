@@ -5,13 +5,9 @@ import dm.uporov.core.analytics.api.Event
 import dm.uporov.machete.annotation.FeatureScope
 import dm.uporov.repository.items.api.Item
 import dm.uporov.repository.items.api.ItemsRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 
 @FeatureScope(feature = ListFragment::class)
 interface ListPresenter {
@@ -19,33 +15,28 @@ interface ListPresenter {
     fun start()
 }
 
-@ExperimentalCoroutinesApi
 internal class ListPresenterImpl(
     private val view: ListView,
     private val analytics: Analytics,
     private val itemsRepository: ItemsRepository,
-    private val coroutineScope: CoroutineScope,
-    addToFavoritesClicksFlow: Flow<Item>,
-    removeFromFavoritesClicksFlow: Flow<Item>
+    addToFavoritesClicksObservable: Observable<Item>,
+    removeFromFavoritesClicksObservable: Observable<Item>
 ) : ListPresenter {
 
     init {
-        addToFavoritesClicksFlow
-            .onEach { itemsRepository.addToFavorites(it) }
-            .launchIn(coroutineScope)
-        removeFromFavoritesClicksFlow
-            .onEach { itemsRepository.removeFromFavorites(it) }
-            .launchIn(coroutineScope)
+        addToFavoritesClicksObservable
+            .subscribeOn(Schedulers.newThread())
+            .subscribe { itemsRepository.addToFavorites(it) }
+        removeFromFavoritesClicksObservable
+            .subscribeOn(Schedulers.newThread())
+            .subscribe { itemsRepository.removeFromFavorites(it) }
     }
 
-    @ExperimentalCoroutinesApi
     override fun start() {
         analytics.sendEvent(Event("ListPresenterImpl is started"))
-        coroutineScope.launch {
-            itemsRepository.itemsFlow()
-                .collect {
-                    view.showItems(it)
-                }
-        }
+        itemsRepository.itemsObservable()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { view.showItems(it) }
     }
 }

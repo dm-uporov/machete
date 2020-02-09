@@ -1,12 +1,12 @@
 package dm.uporov.core.favorites.api
 
-import kotlinx.coroutines.flow.Flow
+import io.reactivex.Observable
 
 interface FavoritesInteractor {
 
-    fun favoritesIdsFlow(): Flow<Set<String>>
+    fun favoritesIdsObservable(): Observable<Set<String>>
 
-    suspend fun addToFavorites(id: String)
+    fun addToFavorites(id: String)
 
-    suspend fun removeFromFavorites(id: String)
+    fun removeFromFavorites(id: String)
 }

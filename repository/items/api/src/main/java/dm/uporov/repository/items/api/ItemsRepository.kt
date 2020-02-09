@@ -1,12 +1,12 @@
 package dm.uporov.repository.items.api
 
-import kotlinx.coroutines.flow.Flow
+import io.reactivex.Observable
 
 interface ItemsRepository {
 
-    fun itemsFlow(): Flow<List<Item>>
+    fun itemsObservable(): Observable<List<Item>>
 
-    suspend fun addToFavorites(item: Item)
+    fun addToFavorites(item: Item)
 
-    suspend fun removeFromFavorites(item: Item)
+    fun removeFromFavorites(item: Item)
 }

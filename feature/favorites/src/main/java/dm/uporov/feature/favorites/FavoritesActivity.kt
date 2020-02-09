@@ -12,11 +12,7 @@ import dm.uporov.machete.extensions.activityAsParentProvider
 import dm.uporov.machete.provider.just
 import dm.uporov.repository.favorites_items.FavoritesItemsRepositoryCore
 import dm.uporov.repository.favorites_items.favoritesItemsRepositoryModule
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 
-@ExperimentalCoroutinesApi
-@FlowPreview
 val favoritesActivityComponent = favoritesActivityComponentDefinition(
     listFragmentParentProvider = activityAsParentProvider(),
     itemsRepositoryProvider = just { it.provideFavoritesItemsRepository() },
