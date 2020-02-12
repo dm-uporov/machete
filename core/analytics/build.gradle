@@ -30,8 +30,8 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation Dependencies.kotlinStdlib
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.1.0'
+    implementation Dependencies.compat
+    implementation Dependencies.ktx
 
     api project(':core:analytics:api')
     implementation project(':core:analytics:impl')
