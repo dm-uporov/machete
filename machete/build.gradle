@@ -6,7 +6,7 @@ apply plugin: 'kotlin'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation Dependencies.kotlinStdlib
-    implementation "androidx.lifecycle:lifecycle-runtime:2.0.0"
+    implementation Dependencies.archLifeCycleRuntime
 
 }
 
